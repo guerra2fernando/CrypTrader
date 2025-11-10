@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+
+# Environments
+.env
+.venv/
+env/
+venv/
+
+# Reports & artifacts
+reports/*.html
+reports/*.png
+reports/*.pdf
+
+# Node / Next.js
+web/next-app/.next/
+web/next-app/node_modules/
+web/next-app/.env.local
+web/next-app/.vercel
+
+# OS
+.DS_Store
+Thumbs.db
+

@@ -1,0 +1,34 @@
+services:
+  mongo:
+    image: mongo:6.0
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.python
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/lenxys-trader
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo
+
+  web:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.next
+    environment:
+      - NEXT_PUBLIC_API_URL=http://api:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  mongo-data:
+
