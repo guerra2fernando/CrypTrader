@@ -3,7 +3,15 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List
+
+from dotenv import load_dotenv
+
+
+# Load environment variables from the project root `.env` file once this module is imported.
+# `find_dotenv` falls back to the current working directory if the file is elsewhere.
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / ".env", override=False)
 
 
 def _parse_csv(value: str | None) -> List[str]:
