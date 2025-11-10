@@ -13,6 +13,8 @@ type Props = {
 
 const NAV_ITEMS = [
   { href: "/", label: "Overview" },
+  { href: "/forecasts", label: "Forecasts" },
+  { href: "/models/registry", label: "Model Registry" },
   { href: "/strategies", label: "Strategies" },
   { href: "/reports", label: "Reports" },
   { href: "/settings", label: "Settings" },

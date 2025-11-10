@@ -23,6 +23,9 @@ class Trade:
     exit_price: Optional[float]
     quantity: float
     pnl: Optional[float]
+    predicted_return: Optional[float] = None
+    confidence: Optional[float] = None
+    realized_return: Optional[float] = None
 
 
 @dataclass
@@ -46,8 +49,17 @@ class Backtester:
         self.position: Optional[Position] = None
         self.trades: List[Trade] = []
         self.equity_curve: List[Dict[str, float]] = []
+        self.last_prediction: Dict[str, Optional[float]] = {"predicted_return": None, "confidence": None}
 
-    def on_signal(self, ts: pd.Timestamp, price: float, signal: str) -> None:
+    def on_signal(
+        self,
+        ts: pd.Timestamp,
+        price: float,
+        signal: str,
+        predicted_return: Optional[float] = None,
+        confidence: Optional[float] = None,
+    ) -> None:
+        self.last_prediction = {"predicted_return": predicted_return, "confidence": confidence}
         signal = signal.lower()
         if signal == "buy":
             self._handle_buy(ts, price)
@@ -72,6 +84,8 @@ class Backtester:
                 exit_price=None,
                 quantity=qty,
                 pnl=None,
+                predicted_return=self.last_prediction.get("predicted_return"),
+                confidence=self.last_prediction.get("confidence"),
             )
         )
 
@@ -87,6 +101,8 @@ class Backtester:
         last_trade.exit_ts = ts
         last_trade.exit_price = exec_price
         last_trade.pnl = pnl
+        if last_trade.entry_price:
+            last_trade.realized_return = (exec_price - last_trade.entry_price) / last_trade.entry_price
         self.position = None
 
     def _mark_equity(self, ts: pd.Timestamp, price: float) -> None:
@@ -94,7 +110,14 @@ class Backtester:
         if self.position:
             position_value = price * self.position.quantity
         equity = self.cash + position_value
-        self.equity_curve.append({"timestamp": ts, "equity": equity})
+        self.equity_curve.append(
+            {
+                "timestamp": ts,
+                "equity": equity,
+                "predicted_return": self.last_prediction.get("predicted_return"),
+                "confidence": self.last_prediction.get("confidence"),
+            }
+        )
 
     def finalize(self) -> BacktestResult:
         metrics = {}
@@ -108,5 +131,14 @@ class Backtester:
                 if returns.std() != 0
                 else 0.0,
             }
+            preds = pd.Series(
+                [point.get("predicted_return") for point in self.equity_curve if point.get("predicted_return") is not None]
+            )
+            realized = pd.Series(
+                [trade.realized_return for trade in self.trades if trade.realized_return is not None]
+            )
+            if not preds.empty and not realized.empty:
+                aligned = realized.iloc[-len(preds) :]
+                metrics["prediction_bias"] = float(aligned.mean() - preds.mean())
         return BacktestResult(trades=self.trades, equity_curve=self.equity_curve, metrics=metrics)
 

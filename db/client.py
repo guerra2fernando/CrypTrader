@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import os
 from contextlib import contextmanager
-from typing import Iterator
+from datetime import datetime
+from typing import Iterator, List, Optional
 
 import pandas as pd
 from pymongo import MongoClient
@@ -55,4 +56,44 @@ def write_features(symbol: str, interval: str, timestamp, feature_dict: dict) ->
             {"$set": {"features": feature_dict}},
             upsert=True,
         )
+
+
+def get_feature_df(symbol: str, interval: str, limit: Optional[int] = None) -> pd.DataFrame:
+    with mongo_client() as client:
+        db = client[get_database_name()]
+        cursor = (
+            db["features"]
+            .find({"symbol": symbol, "interval": interval})
+            .sort("timestamp", 1)
+        )
+        if limit:
+            cursor = cursor.limit(limit)
+        records: List[dict] = list(cursor)
+
+    if not records:
+        return pd.DataFrame()
+
+    rows = []
+    for rec in records:
+        feature_values = rec.get("features", {})
+        feature_values = feature_values if isinstance(feature_values, dict) else {}
+        rows.append({"timestamp": rec["timestamp"], **feature_values})
+
+    df = pd.DataFrame(rows)
+    df.set_index("timestamp", inplace=True)
+    return df
+
+
+def get_feature_row(symbol: str, interval: str, timestamp: datetime) -> Optional[dict]:
+    with mongo_client() as client:
+        db = client[get_database_name()]
+        doc = db["features"].find_one(
+            {"symbol": symbol, "interval": interval, "timestamp": {"$lte": timestamp}},
+            sort=[("timestamp", -1)],
+        )
+        if not doc:
+            return None
+        feature_values = doc.get("features", {})
+        feature_values = feature_values if isinstance(feature_values, dict) else {}
+        return {"timestamp": doc["timestamp"], **feature_values}
 

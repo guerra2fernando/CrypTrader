@@ -11,8 +11,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { fetcher } from "@/lib/api";
+import { fetcher, postJson } from "@/lib/api";
 
 const SETTINGS_STORAGE_KEY = "lenxys-settings-v1";
 
@@ -49,6 +57,35 @@ type EndpointStatus = {
   path: string;
   state: EndpointState;
   message: string;
+};
+
+type ModelHorizonSetting = {
+  name: string;
+  train_window_days: number;
+  retrain_cadence: string;
+  threshold_pct: number;
+};
+
+type ModelSettingsResponse = {
+  horizons: ModelHorizonSetting[];
+  updated_at?: string | null;
+};
+
+type RetrainJob = {
+  _id: string;
+  symbols: string[];
+  algorithm: string;
+  promote?: boolean;
+  dry_run?: boolean;
+  status: string;
+  commands?: string[];
+  created_at?: string;
+  finished_at?: string | null;
+  logs?: Array<{
+    command?: string | null;
+    status?: string;
+    returncode?: number;
+  }>;
 };
 
 const extractEndpointStatus = (endpoint: (typeof STATUS_ENDPOINTS)[number], response: unknown): EndpointStatus => {
@@ -146,6 +183,10 @@ const loadInitialSettings = (): LocalSettings => {
 export default function SettingsPage(): JSX.Element {
   const [settings, setSettings] = useState<LocalSettings>(DEFAULT_SETTINGS);
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
+  const [isBootstrapping, setIsBootstrapping] = useState(false);
+  const [bootstrapMessage, setBootstrapMessage] = useState<string | null>(null);
+  const [bulkRunMessage, setBulkRunMessage] = useState<string | null>(null);
+  const [isBulkRunning, setIsBulkRunning] = useState(false);
 
   const refreshIntervalMs = useMemo(
     () => (settings.autoRefresh.enabled ? Math.max(settings.autoRefresh.intervalSeconds, 5) * 1000 : 0),
@@ -215,6 +256,81 @@ export default function SettingsPage(): JSX.Element {
     },
   );
 
+  const { data: modelSettings, mutate: mutateModelSettings } = useSWR<ModelSettingsResponse>(
+    "/api/settings/models",
+    fetcher,
+  );
+  const [modelSettingsDraft, setModelSettingsDraft] = useState<ModelHorizonSetting[]>([]);
+  const [modelSettingsMessage, setModelSettingsMessage] = useState<string | null>(null);
+  const [savingModelSettings, setSavingModelSettings] = useState(false);
+  const { data: retrainJobs, mutate: mutateRetrainJobs } = useSWR<{ jobs: RetrainJob[] }>(
+    "/api/models/retrain/jobs?limit=6",
+    fetcher,
+    { refreshInterval: 30_000 },
+  );
+
+  useEffect(() => {
+    if (modelSettings?.horizons?.length) {
+      setModelSettingsDraft(modelSettings.horizons.map((item) => ({ ...item })));
+    }
+  }, [modelSettings?.horizons]);
+
+  const updateHorizonField = (index: number, field: keyof ModelHorizonSetting, value: string | number) => {
+    setModelSettingsDraft((prev) => {
+      if (!prev.length) {
+        return prev;
+      }
+      const next = [...prev];
+      next[index] = {
+        ...next[index],
+        [field]: typeof value === "string" ? value : Number(value),
+      };
+      return next;
+    });
+  };
+
+  const handleTrainWindowChange = (index: number, rawValue: string) => {
+    const parsed = Number(rawValue);
+    const clamped = Number.isNaN(parsed) ? 0 : Math.max(1, Math.min(3650, Math.floor(parsed)));
+    updateHorizonField(index, "train_window_days", clamped);
+  };
+
+  const handleCadenceChange = (index: number, value: string) => {
+    updateHorizonField(index, "retrain_cadence", value.toLowerCase());
+  };
+
+  const handleThresholdChange = (index: number, rawValue: string) => {
+    const parsed = Number(rawValue) / 100;
+    const safeValue = Number.isNaN(parsed) ? 0 : Math.max(0, Math.min(1, parsed));
+    updateHorizonField(index, "threshold_pct", safeValue);
+  };
+
+  const handleResetModelSettings = () => {
+    if (modelSettings?.horizons?.length) {
+      setModelSettingsDraft(modelSettings.horizons.map((item) => ({ ...item })));
+    } else {
+      setModelSettingsDraft([]);
+    }
+    setModelSettingsMessage(null);
+  };
+
+  const handleSaveModelSettings = async () => {
+    if (!modelSettingsDraft.length) {
+      return;
+    }
+    setSavingModelSettings(true);
+    setModelSettingsMessage(null);
+    try {
+      await postJson("/api/settings/models", { horizons: modelSettingsDraft });
+      setModelSettingsMessage("Model preferences saved.");
+      await mutateModelSettings();
+    } catch (error) {
+      setModelSettingsMessage(error instanceof Error ? error.message : "Failed to persist model settings.");
+    } finally {
+      setSavingModelSettings(false);
+    }
+  };
+
   const renderEndpointBadge = (state: EndpointState) => {
     if (state === "ok") {
       return (
@@ -242,6 +358,12 @@ export default function SettingsPage(): JSX.Element {
 
   return (
     <div className="space-y-8">
+      {bootstrapMessage ? (
+        <div className="rounded-lg border border-muted bg-muted/20 p-3 text-sm text-muted-foreground">{bootstrapMessage}</div>
+      ) : null}
+      {bulkRunMessage ? (
+        <div className="rounded-lg border border-muted bg-muted/20 p-3 text-sm text-muted-foreground">{bulkRunMessage}</div>
+      ) : null}
       <section>
         <h1 className="text-2xl font-semibold text-foreground">Settings</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -314,6 +436,260 @@ export default function SettingsPage(): JSX.Element {
                 Reset to defaults
               </Button>
             </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section>
+        <Card>
+          <CardHeader>
+            <CardTitle>Data Maintenance</CardTitle>
+            <CardDescription>
+              Trigger the Phase 0 bootstrap workflow (seed symbols, ingest candles, rebuild features, run baseline sim, and generate a report).
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Uses `/api/admin/bootstrap` with the currently configured default symbols and intervals. Expect runtime of a few minutes
+              depending on lookback.
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                onClick={async () => {
+                  setBootstrapMessage(null);
+                  setIsBootstrapping(true);
+                  try {
+                    const response = await postJson("/api/admin/bootstrap", {});
+                    const ingested = Array.isArray(response?.ingested) ? response.ingested.length : 0;
+                    setBootstrapMessage(
+                      `Bootstrap complete (${ingested} ingest batches). Latest report: ${response?.report_path ?? "n/a"}.`,
+                    );
+                  } catch (error) {
+                    setBootstrapMessage(error instanceof Error ? error.message : "Failed to run bootstrap.");
+                  } finally {
+                    setIsBootstrapping(false);
+                  }
+                }}
+                disabled={isBootstrapping}
+              >
+                {isBootstrapping ? "Bootstrapping…" : "Run Bootstrap"}
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                Monitor progress on the dashboard (`/`), strategies table, and recent reports while the job runs.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section>
+        <Card>
+          <CardHeader>
+            <CardTitle>Model Retraining Preferences</CardTitle>
+            <CardDescription>
+              Configure per-horizon training windows, cadences, and activation thresholds saved in MongoDB.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {modelSettingsMessage ? (
+              <div className="rounded-lg border border-muted bg-muted/30 p-3 text-sm text-muted-foreground">
+                {modelSettingsMessage}
+              </div>
+            ) : null}
+
+            {modelSettingsDraft.length ? (
+              <div className="grid gap-4 md:grid-cols-3">
+                {modelSettingsDraft.map((item, index) => {
+                  const thresholdPercent = (item.threshold_pct * 100).toFixed(3);
+                  return (
+                    <div key={item.name} className="space-y-3 rounded-lg border bg-muted/30 p-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-foreground">{item.name.toUpperCase()}</span>
+                        <Badge variant="secondary">{item.retrain_cadence.toUpperCase()}</Badge>
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label htmlFor={`train-${item.name}`}>Train window (days)</Label>
+                        <Input
+                          id={`train-${item.name}`}
+                          type="number"
+                          min={1}
+                          max={3650}
+                          value={item.train_window_days}
+                          onChange={(event) => handleTrainWindowChange(index, event.target.value)}
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label htmlFor={`cadence-${item.name}`}>Retrain cadence</Label>
+                        <select
+                          id={`cadence-${item.name}`}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          value={item.retrain_cadence}
+                          onChange={(event) => handleCadenceChange(index, event.target.value)}
+                        >
+                          <option value="daily">Daily</option>
+                          <option value="weekly">Weekly</option>
+                          <option value="monthly">Monthly</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label htmlFor={`threshold-${item.name}`}>Activation threshold (%)</Label>
+                        <Input
+                          id={`threshold-${item.name}`}
+                          type="number"
+                          min={0}
+                          max={100}
+                          step={0.001}
+                          value={thresholdPercent}
+                          onChange={(event) => handleThresholdChange(index, event.target.value)}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">Loading preferences…</div>
+            )}
+
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs text-muted-foreground">
+                {modelSettings?.updated_at
+                  ? `Last updated ${new Date(modelSettings.updated_at).toLocaleString()}`
+                  : "No saved preferences yet."}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleResetModelSettings}
+                  disabled={savingModelSettings || !modelSettings?.horizons?.length}
+                >
+                  Reset
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSaveModelSettings}
+                  disabled={savingModelSettings || !modelSettingsDraft.length}
+                >
+                  {savingModelSettings ? "Saving…" : "Save preferences"}
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={isBulkRunning}
+                onClick={async () => {
+                  setBulkRunMessage(null);
+                  setIsBulkRunning(true);
+                  try {
+                    const response = await postJson("/api/models/retrain/bulk", {
+                      algorithm: "rf",
+                      promote: false,
+                      dry_run: true,
+                    });
+                    setBulkRunMessage(
+                      `Dry-run scheduled (job ${response.job_id}). ${response.command_count} commands across ${response.symbol_count} symbol(s).`,
+                    );
+                    await mutateRetrainJobs();
+                  } catch (error) {
+                    setBulkRunMessage(error instanceof Error ? error.message : "Failed to schedule dry run.");
+                  } finally {
+                    setIsBulkRunning(false);
+                  }
+                }}
+              >
+                {isBulkRunning ? "Scheduling…" : "Dry-run retraining"}
+              </Button>
+              <Button
+                size="sm"
+                disabled={isBulkRunning}
+                onClick={async () => {
+                  setBulkRunMessage(null);
+                  setIsBulkRunning(true);
+                  try {
+                    const response = await postJson("/api/models/retrain/bulk", {
+                      algorithm: "rf",
+                      promote: false,
+                      dry_run: false,
+                    });
+                    setBulkRunMessage(
+                      `Retraining scheduled (job ${response.job_id}) with ${response.command_count} commands queued.`,
+                    );
+                    await mutateRetrainJobs();
+                  } catch (error) {
+                    setBulkRunMessage(error instanceof Error ? error.message : "Failed to schedule retraining.");
+                  } finally {
+                    setIsBulkRunning(false);
+                  }
+                }}
+              >
+                {isBulkRunning ? "Scheduling…" : "Start retraining"}
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                Jobs use the saved horizon preferences and default symbols; results appear below once queued.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section>
+        <Card>
+          <CardHeader>
+            <CardTitle>Retraining Jobs</CardTitle>
+            <CardDescription>Recent bulk retraining runs. Updated automatically every 30 seconds.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {retrainJobs?.jobs?.length ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Job</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Symbols</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Finished</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {retrainJobs.jobs.map((job) => (
+                    <TableRow key={job._id}>
+                      <TableCell className="font-mono text-xs">{job._id.slice(-8).toUpperCase()}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            job.status === "succeeded"
+                              ? "success"
+                              : job.status === "failed"
+                              ? "destructive"
+                              : job.status === "dry_run"
+                              ? "secondary"
+                              : "warning"
+                          }
+                        >
+                          {job.status.toUpperCase()}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{job.symbols?.join(", ") ?? "—"}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {job.created_at ? new Date(job.created_at).toLocaleString() : "—"}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {job.finished_at ? new Date(job.finished_at).toLocaleString() : job.status === "scheduled" ? "Running…" : "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <p className="text-sm text-muted-foreground">No retraining jobs scheduled yet.</p>
+            )}
           </CardContent>
         </Card>
       </section>

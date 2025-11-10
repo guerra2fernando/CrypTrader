@@ -26,12 +26,34 @@ function resolveApiBase(): string {
   return `${protocol}//${hostname}:${port}`;
 }
 
-export async function fetcher<T>(path: string, init?: RequestInit): Promise<T> {
+export function buildApiUrl(path: string): string {
   const base = resolveApiBase();
-  const url = path.startsWith("http") ? path : `${base}${path}`;
+  return path.startsWith("http") ? path : `${base}${path}`;
+}
+
+export async function fetcher<T>(path: string, init?: RequestInit): Promise<T> {
+  const url = buildApiUrl(path);
   const res = await fetch(url, init);
   if (!res.ok) {
     throw new Error(`API request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function postJson<T>(path: string, body: unknown, init?: RequestInit): Promise<T> {
+  const url = buildApiUrl(path);
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers || {}),
+    },
+    body: JSON.stringify(body),
+    ...init,
+  });
+  if (!res.ok) {
+    const message = await res.text();
+    throw new Error(message || `API request failed: ${res.status}`);
   }
   return res.json();
 }
