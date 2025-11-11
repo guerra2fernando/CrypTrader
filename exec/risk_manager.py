@@ -11,7 +11,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 from bson import ObjectId
 from pydantic import BaseModel, Field, validator
 
-from db.client import get_database_name, mongo_client
+from db import client as db_client
 
 from .settlement import FILLS_COLLECTION, POSITIONS_COLLECTION, WALLETS_COLLECTION
 
@@ -136,8 +136,8 @@ def _serialise_datetime(value: Optional[datetime]) -> Optional[str]:
 
 
 def get_trading_settings() -> TradingSettings:
-    with mongo_client() as client:
-        db = client[get_database_name()]
+    with db_client.mongo_client() as client:
+        db = client[db_client.get_database_name()]
         doc = db[SETTINGS_COLLECTION].find_one({"_id": SETTINGS_DOCUMENT_ID})
     if not doc:
         return TradingSettings()
@@ -150,8 +150,8 @@ def get_trading_settings() -> TradingSettings:
 def save_trading_settings(payload: Union[TradingSettings, Dict[str, Any]]) -> TradingSettings:
     document = payload.dict() if isinstance(payload, TradingSettings) else payload
     document["updated_at"] = _utcnow()
-    with mongo_client() as client:
-        db = client[get_database_name()]
+    with db_client.mongo_client() as client:
+        db = client[db_client.get_database_name()]
         db[SETTINGS_COLLECTION].update_one(
             {"_id": SETTINGS_DOCUMENT_ID},
             {"$set": document},
@@ -311,8 +311,8 @@ class RiskManager:
 
     def record_fill(self, *, mode: str, symbol: str, pnl: float, executed_at: datetime) -> None:
         date_key = executed_at.astimezone(timezone.utc).date().isoformat()
-        with mongo_client() as client:
-            db = client[get_database_name()]
+        with db_client.mongo_client() as client:
+            db = client[db_client.get_database_name()]
             db[METRICS_COLLECTION].update_one(
                 {"_id": date_key},
                 {
@@ -339,8 +339,8 @@ class RiskManager:
             "created_at": _utcnow(),
             "acknowledged": False,
         }
-        with mongo_client() as client:
-            db = client[get_database_name()]
+        with db_client.mongo_client() as client:
+            db = client[db_client.get_database_name()]
             db[BREACHES_COLLECTION].insert_one(document)
         return self._serialise(document)
 
@@ -348,8 +348,8 @@ class RiskManager:
         query: Dict[str, Any] = {}
         if not include_acknowledged:
             query["acknowledged"] = {"$ne": True}
-        with mongo_client() as client:
-            db = client[get_database_name()]
+        with db_client.mongo_client() as client:
+            db = client[db_client.get_database_name()]
             cursor = (
                 db[BREACHES_COLLECTION]
                 .find(query)
@@ -360,8 +360,8 @@ class RiskManager:
         return [self._serialise(doc) for doc in docs]
 
     def acknowledge_breach(self, breach_id: str, *, actor: Optional[str] = None) -> bool:
-        with mongo_client() as client:
-            db = client[get_database_name()]
+        with db_client.mongo_client() as client:
+            db = client[db_client.get_database_name()]
             result = db[BREACHES_COLLECTION].update_one(
                 {"_id": ObjectId(breach_id)},
                 {
@@ -422,8 +422,8 @@ class RiskManager:
     # ------------------------------------------------------------------ #
     def _current_open_exposure(self, *, mode: str) -> float:
         total = 0.0
-        with mongo_client() as client:
-            db = client[get_database_name()]
+        with db_client.mongo_client() as client:
+            db = client[db_client.get_database_name()]
 
             positions = db[POSITIONS_COLLECTION].find({"mode": mode})
             for position in positions:
@@ -442,8 +442,8 @@ class RiskManager:
 
     def _symbol_exposure(self, *, symbol: str, mode: str) -> float:
         exposure = 0.0
-        with mongo_client() as client:
-            db = client[get_database_name()]
+        with db_client.mongo_client() as client:
+            db = client[db_client.get_database_name()]
             pos = db[POSITIONS_COLLECTION].find_one({"symbol": symbol, "mode": mode})
             if pos:
                 exposure += abs(float(pos.get("quantity", 0.0)) * float(pos.get("avg_entry_price", 0.0)))
@@ -458,8 +458,8 @@ class RiskManager:
         return float(exposure)
 
     def _open_orders_count(self, *, symbol: str, mode: str) -> int:
-        with mongo_client() as client:
-            db = client[get_database_name()]
+        with db_client.mongo_client() as client:
+            db = client[db_client.get_database_name()]
             count = db[ORDERS_COLLECTION].count_documents(
                 {"symbol": symbol, "mode": mode, "status": {"$in": ["new", "submitted", "partially_filled"]}}
             )
@@ -467,8 +467,8 @@ class RiskManager:
 
     def _daily_realized_loss(self) -> float:
         start = _utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-        with mongo_client() as client:
-            db = client[get_database_name()]
+        with db_client.mongo_client() as client:
+            db = client[db_client.get_database_name()]
             pipeline = [
                 {"$match": {"executed_at": {"$gte": start}}},
                 {"$group": {"_id": None, "pnl": {"$sum": "$pnl"}}},
@@ -481,8 +481,8 @@ class RiskManager:
 
     def _auto_trades_today(self) -> int:
         start = _utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-        with mongo_client() as client:
-            db = client[get_database_name()]
+        with db_client.mongo_client() as client:
+            db = client[db_client.get_database_name()]
             count = db[ORDERS_COLLECTION].count_documents(
                 {
                     "created_at": {"$gte": start},
@@ -493,8 +493,8 @@ class RiskManager:
 
     def _positions_count(self) -> Dict[str, int]:
         counts: Dict[str, int] = {}
-        with mongo_client() as client:
-            db = client[get_database_name()]
+        with db_client.mongo_client() as client:
+            db = client[db_client.get_database_name()]
             pipeline = [
                 {"$group": {"_id": "$mode", "count": {"$sum": 1}}},
             ]

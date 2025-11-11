@@ -12,7 +12,7 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, validator
 
-from db.client import get_database_name, mongo_client
+from db import client as db_client
 from evolution.promoter import promote_intraday_candidate
 from manager.experiment_runner import (
     ExperimentRequest,
@@ -484,8 +484,8 @@ def _append_promotion_note(cohort_id: str, note: Optional[str]) -> None:
         "created_at": datetime.utcnow(),
         "source": "api",
     }
-    with mongo_client() as client:
-        db = client[get_database_name()]
+    with db_client.mongo_client() as client:
+        db = client[db_client.get_database_name()]
         db["promotion_audit_events"].insert_one(log_entry)
 
 
@@ -524,8 +524,8 @@ def post_launch_intraday_cohort(payload: IntradayLaunchPayload) -> Dict[str, Any
 
 @router.get("/cohorts/{cohort_id}")
 def get_intraday_cohort_detail(cohort_id: str) -> Dict[str, Any]:
-    with mongo_client() as client:
-        db = client[get_database_name()]
+    with db_client.mongo_client() as client:
+        db = client[db_client.get_database_name()]
         cohort_doc = db["sim_runs_intraday"].find_one({"cohort_id": cohort_id})
         summary_doc = db["cohort_summaries"].find_one({"cohort_id": cohort_id})
     if not cohort_doc or not summary_doc:
@@ -586,8 +586,8 @@ def list_intraday_cohorts(
     filters = _cohort_filters(date, bankroll)
     skip = (page - 1) * page_size
     start = time.perf_counter()
-    with mongo_client() as client:
-        db = client[get_database_name()]
+    with db_client.mongo_client() as client:
+        db = client[db_client.get_database_name()]
         collection = db["sim_runs_intraday"]
         total = collection.count_documents(filters)
         cursor = (
@@ -616,8 +616,8 @@ def list_intraday_cohorts(
 @router.get("/cohorts/{cohort_id}/export.csv")
 def export_cohort_csv(cohort_id: str) -> StreamingResponse:
     start = time.perf_counter()
-    with mongo_client() as client:
-        db = client[get_database_name()]
+    with db_client.mongo_client() as client:
+        db = client[db_client.get_database_name()]
         doc = db["sim_runs_intraday"].find_one({"cohort_id": cohort_id})
     if not doc:
         raise HTTPException(status_code=404, detail="Cohort not found.")

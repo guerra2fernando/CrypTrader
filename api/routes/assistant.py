@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, timedelta
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
+import db.client as db_client
 from assistant import (
     ActionManager,
     AssistantConversationTurn,
@@ -174,17 +175,35 @@ def get_evidence(namespace: str, identifier: str) -> Dict[str, Any]:
 @router.get("/cohorts/status")
 def get_cohorts_status(limit: int = Query(default=3, ge=1, le=10)) -> Dict[str, Any]:
     """Lightweight endpoint for assistant to poll cohort status."""
-    from db.client import get_database_name, mongo_client
+    def _created_at_key(doc: Dict[str, Any]) -> datetime:
+        value = doc.get("created_at")
+        if isinstance(value, datetime):
+            return value
+        return datetime.min
 
-    with mongo_client() as client:
-        db = client[get_database_name()]
+    with db_client.mongo_client() as client:
+        db = client[db_client.get_database_name()]
         cohorts_cursor = (
-            db["sim_runs_intraday"]
-            .find({}, {"cohort_id": 1, "created_at": 1, "bankroll": 1, "agent_count": 1})
-            .sort("created_at", -1)
-            .limit(limit)
+            db["sim_runs_intraday"].find(
+                {},
+                {"cohort_id": 1, "created_at": 1, "bankroll": 1, "agent_count": 1},
+            )
         )
-        cohorts = list(cohorts_cursor)
+
+        cohorts: List[Dict[str, Any]]
+        try:
+            sorted_cursor = cohorts_cursor.sort("created_at", -1)
+        except TypeError:
+            cohorts_list = list(cohorts_cursor or [])
+            cohorts_list.sort(key=_created_at_key, reverse=True)
+            cohorts = cohorts_list[:limit]
+        else:
+            try:
+                sorted_cursor = sorted_cursor.limit(limit)
+            except TypeError:
+                pass
+            cohorts = list(sorted_cursor)
+
         cohort_ids = [doc.get("cohort_id") for doc in cohorts if doc.get("cohort_id")]
         summaries_cursor = db["cohort_summaries"].find(
             {"cohort_id": {"$in": cohort_ids}},
@@ -214,10 +233,8 @@ def get_cohorts_status(limit: int = Query(default=3, ge=1, le=10)) -> Dict[str, 
 @router.get("/cohorts/{cohort_id}/promotion-readiness")
 def get_promotion_readiness(cohort_id: str) -> Dict[str, Any]:
     """Check if a cohort is ready for Day-3 promotion (assistant-friendly endpoint)."""
-    from db.client import get_database_name, mongo_client
-
-    with mongo_client() as client:
-        db = client[get_database_name()]
+    with db_client.mongo_client() as client:
+        db = client[db_client.get_database_name()]
         cohort_doc = db["sim_runs_intraday"].find_one({"cohort_id": cohort_id})
         summary_doc = db["cohort_summaries"].find_one({"cohort_id": cohort_id})
 
@@ -248,17 +265,14 @@ def get_promotion_readiness(cohort_id: str) -> Dict[str, Any]:
 @router.get("/cohorts/bankroll-summary")
 def get_bankroll_summary() -> Dict[str, Any]:
     """Summarize bankroll usage across recent cohorts (assistant-friendly)."""
-    from datetime import datetime, timedelta
-    from db.client import get_database_name, mongo_client
-
     cutoff = datetime.utcnow() - timedelta(days=7)
-    with mongo_client() as client:
-        db = client[get_database_name()]
+    with db_client.mongo_client() as client:
+        db = client[db_client.get_database_name()]
         cohorts_cursor = db["sim_runs_intraday"].find(
             {"created_at": {"$gte": cutoff}},
             {"cohort_id": 1, "bankroll": 1, "created_at": 1, "agent_count": 1},
         )
-        cohorts = list(cohorts_cursor)
+        cohorts = list(cohorts_cursor or [])
         cohort_ids = [doc.get("cohort_id") for doc in cohorts if doc.get("cohort_id")]
         summaries_cursor = db["cohort_summaries"].find(
             {"cohort_id": {"$in": cohort_ids}}, {"cohort_id": 1, "total_pnl": 1, "bankroll_utilization_pct": 1}

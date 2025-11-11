@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 from bson import ObjectId
 from pydantic import BaseModel, Field, validator
 
-from db.client import get_database_name, mongo_client
+from db import client as db_client
 from monitor.trade_alerts import TradeAlertClient
 
 from .connector import CCXTConnector, ExchangeConnector, OrderPayload, PaperConnector
@@ -207,8 +207,8 @@ class OrderManager:
             },
             "$push": {"history": {"status": OrderStatus.CANCELED.value, "timestamp": _utcnow(), "reason": payload.reason}},
         }
-        with mongo_client() as client:
-            db = client[get_database_name()]
+        with db_client.mongo_client() as client:
+            db = client[db_client.get_database_name()]
             db[ORDERS_COLLECTION].update_one({"order_id": order_id}, update)
             doc = db[ORDERS_COLLECTION].find_one({"order_id": order_id})
 
@@ -247,8 +247,8 @@ class OrderManager:
             )
             return self.place_order(payload)
 
-        with mongo_client() as client:
-            db = client[get_database_name()]
+        with db_client.mongo_client() as client:
+            db = client[db_client.get_database_name()]
             db[ORDERS_COLLECTION].update_one(
                 {"order_id": order_id},
                 {"$set": {**updates, "updated_at": _utcnow()}, "$push": {"history": {"updates": updates, "timestamp": _utcnow()}}},
@@ -275,8 +275,8 @@ class OrderManager:
             "cost": exchange_state.get("cost"),
             "updated_at": _utcnow(),
         }
-        with mongo_client() as client:
-            db = client[get_database_name()]
+        with db_client.mongo_client() as client:
+            db = client[db_client.get_database_name()]
             db[ORDERS_COLLECTION].update_one({"order_id": order_id}, {"$set": updates})
             doc = db[ORDERS_COLLECTION].find_one({"order_id": order_id})
 
@@ -291,8 +291,8 @@ class OrderManager:
             query["status"] = status
         if mode:
             query["mode"] = mode
-        with mongo_client() as client:
-            db = client[get_database_name()]
+        with db_client.mongo_client() as client:
+            db = client[db_client.get_database_name()]
             cursor = (
                 db[ORDERS_COLLECTION]
                 .find(query)
@@ -315,8 +315,8 @@ class OrderManager:
         query: Dict[str, Any] = {}
         if mode:
             query["mode"] = mode
-        with mongo_client() as client:
-            db = client[get_database_name()]
+        with db_client.mongo_client() as client:
+            db = client[db_client.get_database_name()]
             cursor = (
                 db[FILLS_COLLECTION]
                 .find(query)
@@ -330,8 +330,8 @@ class OrderManager:
         query: Dict[str, Any] = {}
         if mode:
             query["mode"] = mode
-        with mongo_client() as client:
-            db = client[get_database_name()]
+        with db_client.mongo_client() as client:
+            db = client[db_client.get_database_name()]
             cursor = (
                 db[LEDGER_COLLECTION]
                 .find(query)
@@ -345,8 +345,8 @@ class OrderManager:
         query: Dict[str, Any] = {"status": {"$in": ["new", "submitted", "partially_filled"]}}
         if mode:
             query["mode"] = mode
-        with mongo_client() as client:
-            db = client[get_database_name()]
+        with db_client.mongo_client() as client:
+            db = client[db_client.get_database_name()]
             orders = list(db[ORDERS_COLLECTION].find(query))
         cancelled = 0
         for order in orders:
@@ -419,8 +419,8 @@ class OrderManager:
             "created_at": now,
             "updated_at": now,
         }
-        with mongo_client() as client:
-            db = client[get_database_name()]
+        with db_client.mongo_client() as client:
+            db = client[db_client.get_database_name()]
             db[ORDERS_COLLECTION].insert_one(document)
         return document
 
@@ -502,8 +502,8 @@ class OrderManager:
         return mapping.get((status or "").lower(), status or OrderStatus.NEW.value)
 
     def _get_order(self, order_id: str) -> Optional[Dict[str, Any]]:
-        with mongo_client() as client:
-            db = client[get_database_name()]
+        with db_client.mongo_client() as client:
+            db = client[db_client.get_database_name()]
             doc = db[ORDERS_COLLECTION].find_one({"order_id": order_id})
         return doc
 

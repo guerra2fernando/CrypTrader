@@ -44,9 +44,17 @@ def _apply_feature_mutations(
 
 
 def _apply_horizon_mutation(metadata: dict, operations: List[str], config: MutationConfig, rng: random.Random) -> None:
+    allowed = list(config.allowed_horizons or [])
     current = metadata.get("horizon", "1h")
-    if rng.random() < 0.4 and config.allowed_horizons:
-        choices = [h for h in config.allowed_horizons if h != current]
+
+    if allowed and current not in allowed:
+        selected = rng.choice(allowed)
+        metadata["horizon"] = selected
+        operations.append(f"horizon_normalise:{current}->{selected}")
+        current = selected
+
+    if allowed and rng.random() < 0.4:
+        choices = [h for h in allowed if h != current]
         if choices:
             selected = rng.choice(choices)
             metadata["horizon"] = selected
