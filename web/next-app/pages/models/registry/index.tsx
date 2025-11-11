@@ -17,6 +17,7 @@ type ModelRegistryDetail = ModelRegistryRecord & {
   shap_summary_top_features?: Array<{ feature: string; importance: number }>;
   evaluation_artifact?: string;
   shap_summary_artifact?: string;
+  evaluation_dashboard?: string;
 };
 
 function useRegistry(symbol: string, horizon: string) {
@@ -26,7 +27,7 @@ function useRegistry(symbol: string, horizon: string) {
   params.append("limit", "50");
 
   const key = `/api/models/registry?${params.toString()}`;
-  return useSWR<RegistryResponse>(key, (url) => fetcher<RegistryResponse>(url), {
+  return useSWR<RegistryResponse>(key, (url: string) => fetcher<RegistryResponse>(url), {
     refreshInterval: 60_000,
     revalidateOnFocus: true,
   });
@@ -118,7 +119,7 @@ export default function ModelRegistryPage() {
                 id="symbol-filter"
                 placeholder="e.g. BTC/USDT"
                 value={symbolFilter}
-                onChange={(event) => setSymbolFilter(event.target.value.trim().toUpperCase())}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSymbolFilter(event.target.value.trim().toUpperCase())}
               />
             </div>
             <div className="space-y-2">
@@ -127,7 +128,7 @@ export default function ModelRegistryPage() {
                 id="horizon-filter"
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 value={horizonFilter}
-                onChange={(event) => setHorizonFilter(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLSelectElement>) => setHorizonFilter(event.target.value)}
               >
                 <option value="">All</option>
                 <option value="1m">1m</option>

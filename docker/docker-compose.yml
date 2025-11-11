@@ -6,7 +6,7 @@ services:
       - "6379:6379"
 
   mongo:
-    image: mongo:6.0
+    image: mongo:8.2
     restart: unless-stopped
     ports:
       - "27017:27017"
@@ -44,7 +44,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.python
-    command: celery -A manager.tasks worker --loglevel=info
+    command: celery -A manager.tasks:celery_app worker --loglevel=info
     environment:
       - MONGO_URI=mongodb://mongo:27017/lenxys-trader
       - CELERY_BROKER_URL=redis://redis:6379/0

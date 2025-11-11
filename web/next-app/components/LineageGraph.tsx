@@ -33,7 +33,7 @@ export function LineageGraph({ nodes, links }: Props) {
     grouped.set(generation, bucket);
   }
 
-  const sortedGenerations = [...grouped.keys()].sort((a, b) => a - b);
+  const sortedGenerations = Array.from(grouped.keys()).sort((a, b) => a - b);
 
   return (
     <Card>

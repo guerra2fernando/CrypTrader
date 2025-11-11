@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { fetcher, postJson } from "@/lib/api";
+import { fetcher, putJson } from "@/lib/api";
 
 type ExperimentSettings = {
   symbol: string;
@@ -65,7 +65,7 @@ export default function ExperimentSettingsPage() {
     setSaving(true);
     setMessage(null);
     try {
-      await postJson("/api/settings/experiments", {
+      await putJson("/api/settings/experiments", {
         ...form,
         families: form.families.map((item) => item.trim()).filter(Boolean),
       });

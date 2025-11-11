@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.routes import (
@@ -46,6 +46,20 @@ app.include_router(knowledge.router, prefix="/api/knowledge")
 app.include_router(admin.router, prefix="/api/admin")
 app.include_router(trade.router, prefix="/api/trading")
 app.include_router(risk.router, prefix="/api/risk")
+
+# WebSocket endpoints (mounted at root to match documentation)
+@app.websocket("/ws/trading")
+async def websocket_trading(websocket: WebSocket):
+    """WebSocket endpoint for real-time trading updates."""
+    from api.routes.trade import websocket_trading as trading_ws
+    await trading_ws(websocket)
+
+
+@app.websocket("/ws/evolution")
+async def websocket_evolution(websocket: WebSocket):
+    """WebSocket endpoint for real-time evolution experiment updates."""
+    from api.routes.evolution import websocket_evolution as evolution_ws
+    await evolution_ws(websocket)
 
 
 @app.get("/api/status")

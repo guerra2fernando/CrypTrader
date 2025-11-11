@@ -17,6 +17,7 @@ import { TradingTabs } from "@/components/TradingTabs";
 import { useToast } from "@/components/ToastProvider";
 import { Card } from "@/components/ui/card";
 import { fetcher, postJson } from "@/lib/api";
+import { useWebSocket } from "@/lib/hooks";
 
 const MODES = [
   { key: "paper", label: "Paper", description: "Virtual ledger and fills — safest place to start." },
@@ -29,23 +30,41 @@ export default function TradingControlCenterPage() {
   const [editingOrder, setEditingOrder] = useState(null);
   const { pushToast } = useToast();
 
+  // Use WebSocket for real-time updates, fallback to polling
+  const { data: wsData, isConnected: wsConnected } = useWebSocket("/ws/trading");
   const {
     data: summary,
     mutate: refreshSummary,
     isValidating,
-  } = useSWR("/api/trading/summary", fetcher, { refreshInterval: 15_000 });
+  } = useSWR("/api/trading/summary", fetcher, { 
+    refreshInterval: wsConnected ? 0 : 15_000, // Disable polling if WebSocket is connected
+  });
+
+  // Merge WebSocket data with summary data
+  const mergedSummary = useMemo(() => {
+    if (wsData && wsData.type === "trading_update") {
+      // Use WebSocket data if available
+      return {
+        orders: wsData.orders || [],
+        fills: wsData.fills || [],
+        positions: wsData.positions || [],
+        risk: summary?.risk || { open_exposure: {}, kill_switch: { armed: false } },
+      };
+    }
+    return summary;
+  }, [wsData, summary]);
 
   const orders = useMemo(
-    () => (summary?.orders ?? []).filter((order) => order.mode === mode),
-    [summary, mode],
+    () => (mergedSummary?.orders ?? []).filter((order) => order.mode === mode),
+    [mergedSummary, mode],
   );
   const positions = useMemo(
-    () => (summary?.positions ?? []).filter((position) => (position.mode ?? mode) === mode),
-    [summary, mode],
+    () => (mergedSummary?.positions ?? []).filter((position) => (position.mode ?? mode) === mode),
+    [mergedSummary, mode],
   );
   const fills = useMemo(
-    () => (summary?.fills ?? []).filter((fill) => (fill.mode ?? mode) === mode).slice(0, 8),
-    [summary, mode],
+    () => (mergedSummary?.fills ?? []).filter((fill) => (fill.mode ?? mode) === mode).slice(0, 8),
+    [mergedSummary, mode],
   );
   const latencies = useMemo(() => {
     return orders
@@ -58,7 +77,7 @@ export default function TradingControlCenterPage() {
       .slice(-12);
   }, [orders]);
 
-  const risk = summary?.risk ?? { open_exposure: {}, kill_switch: { armed: false } };
+  const risk = mergedSummary?.risk ?? summary?.risk ?? { open_exposure: {}, kill_switch: { armed: false } };
 
   const handleSubmitOrder = async (payload) => {
     await postJson("/api/trading/orders", payload);
@@ -112,7 +131,7 @@ export default function TradingControlCenterPage() {
   const exposureEntries = Object.entries(risk.open_exposure ?? {}).map(([key, value]) => ({
     mode: key,
     value,
-    limit: summary?.risk?.settings?.risk?.max_open_exposure_usd ?? 1,
+    limit: mergedSummary?.risk?.settings?.risk?.max_open_exposure_usd ?? summary?.risk?.settings?.risk?.max_open_exposure_usd ?? 1,
   }));
 
   return (
@@ -148,18 +167,18 @@ export default function TradingControlCenterPage() {
         <RiskGaugeCard
           title="Open Exposure"
           current={risk.open_exposure?.[mode] ?? 0}
-          limit={summary?.risk?.settings?.risk?.max_open_exposure_usd ?? 1}
+          limit={mergedSummary?.risk?.settings?.risk?.max_open_exposure_usd ?? summary?.risk?.settings?.risk?.max_open_exposure_usd ?? 1}
         />
         <RiskGaugeCard
           title="Daily Loss"
-          current={Math.abs(summary?.risk?.daily_loss_usd ?? 0)}
-          limit={summary?.risk?.settings?.risk?.max_daily_loss_usd ?? 1}
-          tone={summary?.risk?.daily_loss_usd < 0 ? "warning" : "ok"}
+          current={Math.abs(mergedSummary?.risk?.daily_loss_usd ?? summary?.risk?.daily_loss_usd ?? 0)}
+          limit={mergedSummary?.risk?.settings?.risk?.max_daily_loss_usd ?? summary?.risk?.settings?.risk?.max_daily_loss_usd ?? 1}
+          tone={(mergedSummary?.risk?.daily_loss_usd ?? summary?.risk?.daily_loss_usd ?? 0) < 0 ? "warning" : "ok"}
         />
         <RiskGaugeCard
           title="Max Trade Cap"
           current={0}
-          limit={summary?.risk?.settings?.risk?.max_trade_usd ?? 1}
+          limit={mergedSummary?.risk?.settings?.risk?.max_trade_usd ?? summary?.risk?.settings?.risk?.max_trade_usd ?? 1}
           description="Auto-calculated per order."
         />
       </div>

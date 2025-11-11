@@ -42,7 +42,7 @@ class AssistantQueryPayload(BaseModel):
 
 
 class RecommendationDecisionPayload(BaseModel):
-    decision: str = Field(..., regex="^(approve|reject|modify|snooze)$")
+    decision: str = Field(..., pattern="^(approve|reject|modify|snooze)$")
     user_id: Optional[str] = None
     user_notes: Optional[str] = None
     modified_params: Optional[Dict[str, Any]] = None

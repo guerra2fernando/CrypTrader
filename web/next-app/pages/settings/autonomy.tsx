@@ -79,7 +79,7 @@ export default function AutonomySettingsPage() {
                 type="number"
                 step="0.01"
                 value={form.auto_promote_threshold}
-                onChange={(event) => updateField("auto_promote_threshold", Number(event.target.value))}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => updateField("auto_promote_threshold", Number(event.target.value))}
               />
             </div>
             <div className="space-y-2">
@@ -88,7 +88,7 @@ export default function AutonomySettingsPage() {
                 id="retention"
                 type="number"
                 value={form.knowledge_retention_weeks}
-                onChange={(event) => updateField("knowledge_retention_weeks", Number(event.target.value))}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => updateField("knowledge_retention_weeks", Number(event.target.value))}
               />
             </div>
           </div>
@@ -100,7 +100,7 @@ export default function AutonomySettingsPage() {
                 id="provider"
                 className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
                 value={form.llm_provider}
-                onChange={(event) => updateField("llm_provider", event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLSelectElement>) => updateField("llm_provider", event.target.value)}
               >
                 {PROVIDERS.map((provider) => (
                   <option key={provider} value={provider}>
@@ -111,7 +111,7 @@ export default function AutonomySettingsPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="model">Model</Label>
-              <Input id="model" value={form.llm_model ?? ""} onChange={(event) => updateField("llm_model", event.target.value)} />
+              <Input id="model" value={form.llm_model ?? ""} onChange={(event: React.ChangeEvent<HTMLInputElement>) => updateField("llm_model", event.target.value)} />
             </div>
           </div>
 

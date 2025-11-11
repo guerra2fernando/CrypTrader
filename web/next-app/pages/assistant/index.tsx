@@ -193,6 +193,7 @@ export default function AssistantWorkspacePage() {
           strategyId={strategyId}
         />
       </aside>
+      </div>
       <EvidenceDrawer entry={selectedEntry} onClose={() => setSelectedEntry(null)} />
     </div>
   );

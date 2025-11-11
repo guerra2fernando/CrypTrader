@@ -84,10 +84,14 @@ export default function LearningSettingsPage() {
       if (!prev) {
         return prev;
       }
+      const sectionValue = prev[section];
+      if (typeof sectionValue !== "object" || sectionValue === null) {
+        return prev;
+      }
       return {
         ...prev,
         [section]: {
-          ...prev[section],
+          ...(sectionValue as Record<string, unknown>),
           [key]: value,
         },
       };
@@ -295,7 +299,12 @@ function Field({ label, value, onChange, step }: FieldProps) {
   return (
     <div className="space-y-2">
       <Label className="text-sm font-medium text-foreground">{label}</Label>
-      <Input type="number" value={displayValue} step={step} onChange={(event) => onChange(event.target.value)} />
+      <Input
+        type="number"
+        value={displayValue}
+        step={step}
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => onChange(event.target.value)}
+      />
     </div>
   );
 }

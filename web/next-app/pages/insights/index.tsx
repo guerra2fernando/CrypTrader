@@ -47,19 +47,35 @@ type KnowledgeResponse = {
 };
 
 export default function InsightsPage() {
-  const metaQuery = useSWR<MetaModelResponse>("/api/learning/meta-model", fetcher, {
-    refreshInterval: 60_000,
-    revalidateOnFocus: true,
-  });
-  const allocatorQuery = useSWR<AllocatorResponse>("/api/learning/allocator", fetcher, {
-    refreshInterval: 120_000,
-  });
-  const overfitQuery = useSWR<OverfitResponse>("/api/learning/overfit?status=open", fetcher, {
-    refreshInterval: 60_000,
-  });
-  const knowledgeQuery = useSWR<KnowledgeResponse>("/api/knowledge/latest", fetcher, {
-    refreshInterval: 300_000,
-  });
+  const { data: metaData, mutate: mutateMeta, isLoading: isLoadingMeta } = useSWR<MetaModelResponse>(
+    "/api/learning/meta-model",
+    fetcher,
+    {
+      refreshInterval: 60_000,
+      revalidateOnFocus: true,
+    },
+  );
+  const { data: allocatorData, mutate: mutateAllocator, isLoading: isLoadingAllocator } = useSWR<AllocatorResponse>(
+    "/api/learning/allocator",
+    fetcher,
+    {
+      refreshInterval: 120_000,
+    },
+  );
+  const { data: overfitData, mutate: mutateOverfit, isLoading: isLoadingOverfit } = useSWR<OverfitResponse>(
+    "/api/learning/overfit?status=open",
+    fetcher,
+    {
+      refreshInterval: 60_000,
+    },
+  );
+  const { data: knowledgeData, mutate: mutateKnowledge, isLoading: isLoadingKnowledge } = useSWR<KnowledgeResponse>(
+    "/api/knowledge/latest",
+    fetcher,
+    {
+      refreshInterval: 300_000,
+    },
+  );
 
   const [acknowledgingId, setAcknowledgingId] = useState<string | null>(null);
   const [cycleStatus, setCycleStatus] = useState<{ running: boolean; error?: string; message?: string }>({
@@ -71,15 +87,15 @@ export default function InsightsPage() {
       setAcknowledgingId(alertId);
       try {
         await postJson("/api/learning/overfit/ack", { alert_id: alertId });
-        await overfitQuery.mutate();
-        await knowledgeQuery.mutate();
+        await mutateOverfit();
+        await mutateKnowledge();
       } catch (error) {
         console.error("Failed to acknowledge alert", error);
       } finally {
         setAcknowledgingId(null);
       }
     },
-    [knowledgeQuery, overfitQuery],
+    [mutateKnowledge, mutateOverfit],
   );
 
   const runCycle = useCallback(async () => {
@@ -92,21 +108,21 @@ export default function InsightsPage() {
         evaluate_overfit: true,
       });
       setCycleStatus({ running: false, message: "Learning cycle completed." });
-      await Promise.all([metaQuery.mutate(), allocatorQuery.mutate(), overfitQuery.mutate(), knowledgeQuery.mutate()]);
+      await Promise.all([mutateMeta(), mutateAllocator(), mutateOverfit(), mutateKnowledge()]);
       return response;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to run learning cycle.";
       setCycleStatus({ running: false, error: message });
       return null;
     }
-  }, [allocatorQuery, knowledgeQuery, metaQuery, overfitQuery]);
+  }, [mutateAllocator, mutateKnowledge, mutateMeta, mutateOverfit]);
 
   const metaInsights = useMemo(() => {
-    return metaQuery.data?.latest;
-  }, [metaQuery.data]);
+    return metaData?.latest;
+  }, [metaData]);
 
   const allocatorInsights = useMemo(() => {
-    const snapshot = allocatorQuery.data?.snapshot;
+    const snapshot = allocatorData?.snapshot;
     return snapshot
       ? {
           weights: snapshot.weights,
@@ -114,10 +130,10 @@ export default function InsightsPage() {
           expected_portfolio_risk: snapshot.expected_portfolio_risk,
         }
       : undefined;
-  }, [allocatorQuery.data]);
+  }, [allocatorData]);
 
   const knowledgeInsights = useMemo(() => {
-    const entry = knowledgeQuery.data?.entry;
+    const entry = knowledgeData?.entry;
     if (!entry) {
       return undefined;
     }
@@ -127,7 +143,7 @@ export default function InsightsPage() {
       overfit_ids: entry.overfit_ids,
       queued_strategies: entry.queued_strategies,
     };
-  }, [knowledgeQuery.data]);
+  }, [knowledgeData]);
 
   return (
     <div className="space-y-6">
@@ -161,15 +177,15 @@ export default function InsightsPage() {
       <InsightsTabs
         meta={metaInsights}
         allocator={allocatorInsights}
-        overfit={overfitQuery.data}
+        overfit={overfitData}
         knowledge={knowledgeInsights}
         acknowledgingId={acknowledgingId}
         onAckOverfit={handleAck}
         isLoading={{
-          meta: metaQuery.isLoading,
-          allocator: allocatorQuery.isLoading,
-          overfit: overfitQuery.isLoading,
-          knowledge: knowledgeQuery.isLoading,
+          meta: isLoadingMeta,
+          allocator: isLoadingAllocator,
+          overfit: isLoadingOverfit,
+          knowledge: isLoadingKnowledge,
         }}
       />
     </div>

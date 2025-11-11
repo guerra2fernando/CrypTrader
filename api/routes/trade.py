@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import asyncio
+import json
 from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect, status
 
 from exec.order_manager import CancelRequest, OrderManager, OrderRequest, OrderResponse
 from exec.risk_manager import RiskManager, RiskViolation
+from exec.settlement import SettlementEngine
 
 router = APIRouter()
 
@@ -113,7 +116,109 @@ def trading_stream(limit: int = Query(20, ge=1, le=200)) -> Dict[str, Any]:
     }
 
 
+@router.get("/reconciliation", response_model=Dict[str, Any])
+def get_reconciliation_report(modes: Optional[List[str]] = Query(None)) -> Dict[str, Any]:
+    """Get reconciliation report for trading settlement."""
+    settlement = SettlementEngine()
+    report = settlement.reconciliation_report(modes=modes)
+    return report
+
+
+@router.post("/reconciliation/run", response_model=Dict[str, Any])
+def run_reconciliation(modes: Optional[List[str]] = None) -> Dict[str, Any]:
+    """Trigger reconciliation report (can be called by scheduled jobs)."""
+    from manager.tasks import run_daily_reconciliation
+
+    task = run_daily_reconciliation.delay(modes=modes)
+    return {"task_id": task.id, "status": "scheduled"}
+
+
 def get_risk_manager() -> RiskManager:
     return _get_order_manager().risk_manager
+
+
+def get_order_manager() -> OrderManager:
+    return _get_order_manager()
+
+
+# WebSocket connection manager
+class TradingConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+
+    async def broadcast(self, data: Dict[str, Any]):
+        """Broadcast data to all connected clients."""
+        disconnected = []
+        for connection in self.active_connections:
+            try:
+                await connection.send_json(data)
+            except Exception:
+                disconnected.append(connection)
+        # Remove disconnected clients
+        for connection in disconnected:
+            self.disconnect(connection)
+
+
+trading_manager = TradingConnectionManager()
+
+
+async def websocket_trading(websocket: WebSocket):
+    """WebSocket endpoint for real-time trading updates (orders, fills, positions)."""
+    await trading_manager.connect(websocket)
+    try:
+        manager = _get_order_manager()
+        last_data_hash = None
+        limit = 20  # Default limit
+
+        # Send initial data
+        orders = manager.list_orders(limit=limit)
+        fills = manager.list_fills(limit=limit)
+        positions = manager.list_positions()
+        initial_data = {
+            "type": "trading_update",
+            "orders": orders,
+            "fills": fills,
+            "positions": positions,
+        }
+        await websocket.send_json(initial_data)
+
+        while True:
+            # Fetch current data
+            orders = manager.list_orders(limit=limit)
+            fills = manager.list_fills(limit=limit)
+            positions = manager.list_positions()
+
+            # Create data payload
+            data = {
+                "type": "trading_update",
+                "orders": orders,
+                "fills": fills,
+                "positions": positions,
+            }
+
+            # Only send if data changed (simple hash check)
+            data_str = json.dumps(data, sort_keys=True, default=str)
+            current_hash = hash(data_str)
+            if current_hash != last_data_hash:
+                await websocket.send_json(data)
+                last_data_hash = current_hash
+
+            # Wait before next update (polling interval)
+            await asyncio.sleep(2.0)  # Update every 2 seconds
+
+    except WebSocketDisconnect:
+        trading_manager.disconnect(websocket)
+    except Exception as exc:
+        trading_manager.disconnect(websocket)
+        # Log error but don't crash
+        print(f"WebSocket error: {exc}")
 
 

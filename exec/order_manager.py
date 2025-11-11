@@ -38,10 +38,10 @@ class OrderStatus(str, Enum):
 
 
 class OrderRequest(BaseModel):
-    mode: str = Field(default="paper", regex="^(paper|testnet|live)$")
+    mode: str = Field(default="paper", pattern="^(paper|testnet|live)$")
     symbol: str = Field(..., min_length=3)
-    side: str = Field(..., regex="^(buy|sell)$")
-    type: str = Field(default="limit", regex="^(limit|market|stop|stop_limit)$")
+    side: str = Field(..., pattern="^(buy|sell)$")
+    type: str = Field(default="limit", pattern="^(limit|market|stop|stop_limit)$")
     quantity: float = Field(..., gt=0)
     price: Optional[float] = Field(default=None, gt=0)
     time_in_force: Optional[str] = Field(default=None)

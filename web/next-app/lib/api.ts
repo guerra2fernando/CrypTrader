@@ -76,3 +76,10 @@ export async function putJson<T>(path: string, body: unknown, init?: RequestInit
   return res.json();
 }
 
+export function buildWebSocketUrl(path: string): string {
+  const base = resolveApiBase();
+  // Convert http/https to ws/wss
+  const wsBase = base.replace(/^http/, "ws");
+  return path.startsWith("ws://") || path.startsWith("wss://") ? path : `${wsBase}${path}`;
+}
+
