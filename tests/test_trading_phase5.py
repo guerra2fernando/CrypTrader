@@ -20,7 +20,7 @@ def mock_mongo(monkeypatch):
     from db import client as db_client  # Local import to avoid circulars
 
     monkeypatch.setattr(db_client, "mongo_client", _mongo_client)
-    monkeypatch.setattr(db_client, "get_database_name", lambda default="lenxys-trader": "lenxys-test")
+    monkeypatch.setattr(db_client, "get_database_name", lambda default="cryptotrader": "cryptotrader-test")
     yield
     client.close()
 

@@ -23,7 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import { fetcher, postJson } from "@/lib/api";
 
-const SETTINGS_STORAGE_KEY = "lenxys-settings-v1";
+const SETTINGS_STORAGE_KEY = "cryptotrader-settings-v1";
 
 type AutoRefreshSettings = {
   enabled: boolean;
@@ -251,7 +251,7 @@ export default function GeneralTab(): JSX.Element {
     isLoading: statusesLoading,
     mutate: mutateStatuses,
   } = useSWR(
-    "lenxys.settings.endpoint-status",
+    "cryptotrader.settings.endpoint-status",
     loadEndpointStatuses,
     {
       refreshInterval: refreshIntervalMs,

@@ -1,11 +1,11 @@
-# Lenxys Trader — Autonomous Crypto Trading Platform
+# CryptoTrader — Autonomous Crypto Trading Platform
 
 An intelligent, self-learning cryptocurrency trading system that uses machine learning to predict market movements, automatically execute trades, and continuously improve its strategies.
 
 ## 🎯 What This System Does
 
 ### Simple Explanation
-Lenxys Trader is like having an AI assistant that watches the crypto markets 24/7, learns from past price movements, predicts where prices might go, and can automatically buy or sell cryptocurrencies for you. It starts in "practice mode" (paper trading) so you can test it safely before using real money.
+CryptoTrader is like having an AI assistant that watches the crypto markets 24/7, learns from past price movements, predicts where prices might go, and can automatically buy or sell cryptocurrencies for you. It starts in "practice mode" (paper trading) so you can test it safely before using real money.
 
 ### Advanced Explanation
 A production-ready autonomous trading platform featuring:
@@ -105,7 +105,7 @@ You can connect to any exchange that ccxt supports by configuring your API crede
 ```bash
 # Clone repository
 git clone <repo-url>
-cd lenxys-trader
+cd CrypTrader
 
 # Set up environment
 cp .env.example .env

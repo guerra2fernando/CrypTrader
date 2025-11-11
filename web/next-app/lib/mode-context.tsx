@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 
 export type UserMode = "easy" | "advanced";
 
-const MODE_STORAGE_KEY = "lenxys-user-mode";
+const MODE_STORAGE_KEY = "cryptotrader-user-mode";
 const DEFAULT_MODE: UserMode = "easy";
 
 interface ModeContextType {

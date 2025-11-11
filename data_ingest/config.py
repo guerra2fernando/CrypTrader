@@ -32,8 +32,8 @@ class IngestConfig:
 
     @classmethod
     def from_env(cls) -> "IngestConfig":
-        mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/lenxys-trader")
-        db_name = mongo_uri.rsplit("/", 1)[-1] if "/" in mongo_uri else "lenxys-trader"
+        mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/cryptotrader")
+        db_name = mongo_uri.rsplit("/", 1)[-1] if "/" in mongo_uri else "cryptotrader"
         lookback_days = int(os.getenv("DEFAULT_LOOKBACK_DAYS", "30"))
         batch_size = int(os.getenv("INGEST_BATCH_SIZE", "1000"))
         return cls(

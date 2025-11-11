@@ -11,7 +11,7 @@ from pymongo import MongoClient
 
 
 def _mongo_uri() -> str:
-    return os.getenv("MONGO_URI", "mongodb://localhost:27017/lenxys-trader")
+    return os.getenv("MONGO_URI", "mongodb://localhost:27017/cryptotrader")
 
 
 @contextmanager
@@ -23,7 +23,7 @@ def mongo_client() -> Iterator[MongoClient]:
         client.close()
 
 
-def get_database_name(default: str = "lenxys-trader") -> str:
+def get_database_name(default: str = "cryptotrader") -> str:
     uri = _mongo_uri()
     return uri.rsplit("/", 1)[-1] if "/" in uri else default
 

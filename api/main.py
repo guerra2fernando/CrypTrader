@@ -21,7 +21,7 @@ from api.routes import (
     risk,
 )
 
-app = FastAPI(title="Lenxys Core API")
+app = FastAPI(title="CryptoTrader Core API")
 
 app.add_middleware(
     CORSMiddleware,

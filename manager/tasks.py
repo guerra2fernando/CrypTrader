@@ -15,7 +15,7 @@ RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", BROKER_URL)
 EXPERIMENT_QUEUE = os.getenv("CELERY_EXPERIMENT_QUEUE", "experiments")
 
 celery_app = Celery(
-    "lenxys_trader",
+    "cryptotrader",
     broker=BROKER_URL,
     backend=RESULT_BACKEND,
 )

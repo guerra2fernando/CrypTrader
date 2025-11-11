@@ -1,4 +1,4 @@
-# Lenxys Trader – Customer Q&A
+# CryptoTrader – Customer Q&A
 
 ## Can I see the charts and analysis of each crypto? Where?
 

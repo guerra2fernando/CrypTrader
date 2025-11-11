@@ -20,7 +20,7 @@ def _redis_url() -> str:
 class FeatureCache:
     """Caches short-horizon feature frames in Redis."""
 
-    namespace: str = "lenxys:features"
+    namespace: str = "cryptotrader:features"
     ttl_seconds: int = 1_800
     _client: Optional[Redis] = None
 
