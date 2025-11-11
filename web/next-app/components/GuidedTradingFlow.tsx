@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { useMode } from "@/lib/mode-context";
 import { cn } from "@/lib/utils";
 
@@ -70,7 +71,13 @@ export function GuidedTradingFlow({ onActionSelect, onSubmitOrder }: GuidedTradi
     return (
       <Card className="border-primary/20 bg-primary/5">
         <CardHeader>
-          <CardTitle>What would you like to do?</CardTitle>
+          <CardTitle>
+            What would you like to do?
+            <TooltipExplainer 
+              term="Guided Trading" 
+              explanation="This step-by-step guide makes trading simple, especially if you're new to cryptocurrency. It walks you through each decision with plain language explanations, helping you understand what you're doing and why. Choose an action to get started with easy-to-follow instructions."
+            />
+          </CardTitle>
           <CardDescription>Choose an action to get step-by-step guidance</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2">
@@ -82,6 +89,11 @@ export function GuidedTradingFlow({ onActionSelect, onSubmitOrder }: GuidedTradi
             <div className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-emerald-500" />
               <span className="font-semibold">Buy Cryptocurrency</span>
+              <TooltipExplainer 
+                term="Buy Cryptocurrency" 
+                explanation="This guides you through buying crypto step by step. You'll enter which cryptocurrency you want (like BTC or ETH) and how much money you want to spend. The system will walk you through confirming the details before placing the order."
+                size="sm"
+              />
             </div>
             <span className="text-xs text-muted-foreground">Purchase crypto with step-by-step guidance</span>
           </Button>
@@ -93,6 +105,11 @@ export function GuidedTradingFlow({ onActionSelect, onSubmitOrder }: GuidedTradi
             <div className="flex items-center gap-2">
               <TrendingDown className="h-5 w-5 text-red-500" />
               <span className="font-semibold">Sell Cryptocurrency</span>
+              <TooltipExplainer 
+                term="Sell Cryptocurrency" 
+                explanation="This guides you through selling crypto you already own. You'll specify what you want to sell and how much. Selling converts your cryptocurrency back to cash (or stablecoin), locking in any profit or loss."
+                size="sm"
+              />
             </div>
             <span className="text-xs text-muted-foreground">Sell your crypto holdings</span>
           </Button>
@@ -104,6 +121,11 @@ export function GuidedTradingFlow({ onActionSelect, onSubmitOrder }: GuidedTradi
             <div className="flex items-center gap-2">
               <Eye className="h-5 w-5 text-blue-500" />
               <span className="font-semibold">Check My Positions</span>
+              <TooltipExplainer 
+                term="Check Positions" 
+                explanation="View all the cryptocurrencies you currently own, how much you paid for them, and what they're worth now. This shows your profit/loss and helps you decide what to do next."
+                size="sm"
+              />
             </div>
             <span className="text-xs text-muted-foreground">View your current holdings and their value</span>
           </Button>
@@ -115,6 +137,11 @@ export function GuidedTradingFlow({ onActionSelect, onSubmitOrder }: GuidedTradi
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-primary" />
               <span className="font-semibold">See Recommendations</span>
+              <TooltipExplainer 
+                term="Trading Recommendations" 
+                explanation="Get AI-powered suggestions based on current market conditions and the system's predictions. The assistant analyzes data from all your strategies and forecasts to suggest the best trading opportunities right now."
+                size="sm"
+              />
             </div>
             <span className="text-xs text-muted-foreground">Get AI-powered trading suggestions</span>
           </Button>

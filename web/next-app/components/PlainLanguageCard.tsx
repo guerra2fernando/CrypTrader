@@ -64,9 +64,9 @@ const TERM_MAP: Record<string, { plain: string; explanation: string }> = {
     plain: "Profit/Loss",
     explanation: "The total amount of money you've made or lost from your trades",
   },
-  "Phase 0 Bootstrap": {
+  "Data Bootstrap Controls": {
     plain: "Initial Setup",
-    explanation: "The first step to get your trading system ready by downloading historical market data",
+    explanation: "Kick off the end-to-end data preparation: download market history, build features, and produce a baseline report",
   },
 };
 

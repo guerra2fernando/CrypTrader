@@ -1,4 +1,5 @@
 import { EmptyState } from "@/components/EmptyState";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMode } from "@/lib/mode-context";
@@ -41,7 +42,14 @@ export function MutationQueueDrawer({ items }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base font-semibold">Mutation Queue</CardTitle>
+        <CardTitle className="text-base font-semibold">
+          Mutation Queue
+          <TooltipExplainer 
+            term="Mutation Queue" 
+            explanation="A queue of strategy experiments waiting to be tested or currently running. Each entry is a variant (mutation) of an existing strategy - like tweaking indicator parameters or changing entry rules. The queue shows priority, status (pending/running/completed), and preliminary results. This helps track the evolution pipeline and spot bottlenecks."
+            size="sm"
+          />
+        </CardTitle>
         <CardDescription>Pending and in-flight strategy variants.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">

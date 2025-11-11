@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { fetcher, postJson } from "@/lib/api";
 
 type RegistryResponse = {
@@ -97,7 +98,13 @@ export default function ModelRegistryPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Model Registry</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Model Registry
+            <TooltipExplainer 
+              term="Model Registry" 
+              explanation="The model registry is a catalog of all machine learning models that predict price movements. Each model is trained on specific symbol/timeframe combinations (like BTC/USDT 1h). The registry tracks model performance metrics (RMSE, directional accuracy), training dates, and deployment status. Models are periodically retrained with fresh data to maintain accuracy. Think of this as your ML model database and performance tracker."
+            />
+          </h1>
           <p className="text-sm text-muted-foreground">
             Inspect trained models, compare metrics, and trigger retraining jobs.
           </p>
@@ -204,7 +211,14 @@ export default function ModelRegistryPage() {
           </CardHeader>
           <CardContent className="grid gap-6 lg:grid-cols-2">
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-foreground">Feature importance</h3>
+              <h3 className="text-sm font-semibold text-foreground">
+                Feature Importance
+                <TooltipExplainer 
+                  term="Feature Importance" 
+                  explanation="Shows which technical indicators and market data the model relies on most when making predictions. Higher values mean the feature has more influence on the model's decisions. For example, if 'EMA_20' has high importance, the 20-period exponential moving average strongly affects predictions. Use this to understand what your model is paying attention to."
+                  size="sm"
+                />
+              </h3>
               {selectedModel.feature_importance?.length ? (
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   {selectedModel.feature_importance.slice(0, 8).map((item) => {
@@ -228,7 +242,14 @@ export default function ModelRegistryPage() {
             </div>
 
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-foreground">SHAP top features</h3>
+              <h3 className="text-sm font-semibold text-foreground">
+                SHAP Top Features
+                <TooltipExplainer 
+                  term="SHAP Values" 
+                  explanation="SHAP (SHapley Additive exPlanations) provides a more sophisticated analysis of feature importance by showing how much each feature contributes to individual predictions on average. Unlike basic feature importance, SHAP accounts for feature interactions. This gives you deeper insight into model decision-making and helps identify if the model learned sensible patterns."
+                  size="sm"
+                />
+              </h3>
               {selectedModel.shap_summary_top_features?.length ? (
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   {selectedModel.shap_summary_top_features.slice(0, 8).map((item) => {

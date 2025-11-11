@@ -1,5 +1,6 @@
 import { ConfidenceIndicator } from "@/components/ConfidenceIndicator";
 import { EmptyState } from "@/components/EmptyState";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { Badge } from "@/components/ui/badge";
 import { ForecastSparkline } from "@/components/ForecastSparkline";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,7 +66,13 @@ export function ForecastTable({ data, isLoading, lastUpdated, history }: Props) 
     <Card className="border">
       {isEasyMode && (
         <CardHeader>
-          <CardTitle>Price Predictions</CardTitle>
+          <CardTitle>
+            Price Predictions
+            <TooltipExplainer 
+              term="Price Predictions" 
+              explanation="Machine learning models analyze historical patterns, technical indicators, and market data to predict future price movements. Each prediction includes a confidence score showing how certain the system is. These forecasts help inform trading decisions but aren't guarantees - markets are unpredictable. The 'trend' sparkline shows recent prediction history."
+            />
+          </CardTitle>
           <CardDescription>
             These are predictions about how cryptocurrency prices might change. Higher confidence means the system is
             more certain about the prediction.

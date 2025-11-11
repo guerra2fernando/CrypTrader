@@ -5,6 +5,7 @@ import useSWR from "swr";
 
 import { ErrorMessage } from "@/components/ErrorMessage";
 import { ForecastTable, type ForecastRow } from "@/components/ForecastTable";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildApiUrl, fetcher } from "@/lib/api";
@@ -121,7 +122,13 @@ export default function ForecastsTab() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight">Forecast Studio</h2>
+          <h2 className="text-xl font-semibold tracking-tight">
+            Forecast Studio
+            <TooltipExplainer 
+              term="Forecast Studio" 
+              explanation="This shows AI predictions about how cryptocurrency prices will move in the future. Forecasts combine multiple machine learning models to predict price changes over different time periods (1 minute, 1 hour, or 1 day)."
+            />
+          </h2>
           <p className="text-sm text-muted-foreground">
             Ensemble predictions for {symbols.join(", ")} across multiple horizons.
           </p>
@@ -130,6 +137,27 @@ export default function ForecastsTab() {
           {HORIZONS.map((h) => (
             <Button key={h} variant={h === horizon ? "default" : "outline"} onClick={() => setHorizon(h)}>
               {h.toUpperCase()}
+              {h === "1m" && (
+                <TooltipExplainer 
+                  term="1m Horizon" 
+                  explanation="1-minute predictions: Very short-term forecasts for rapid trading decisions. Best for high-frequency strategies."
+                  size="sm"
+                />
+              )}
+              {h === "1h" && (
+                <TooltipExplainer 
+                  term="1h Horizon" 
+                  explanation="1-hour predictions: Medium-term forecasts for intraday trading. Good balance between noise reduction and responsiveness."
+                  size="sm"
+                />
+              )}
+              {h === "1d" && (
+                <TooltipExplainer 
+                  term="1d Horizon" 
+                  explanation="1-day predictions: Long-term forecasts for swing trading or position holding. Smooths out short-term volatility to identify bigger trends."
+                  size="sm"
+                />
+              )}
             </Button>
           ))}
           <Button variant="outline" onClick={handleExport} disabled={isLoading || isExporting}>
@@ -160,8 +188,21 @@ export default function ForecastsTab() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{horizon.toUpperCase()} Ensemble Forecasts</CardTitle>
-          <CardDescription>Weighted by inverse RMSE with confidence derived from prediction spread.</CardDescription>
+          <CardTitle>
+            {horizon.toUpperCase()} Ensemble Forecasts
+            <TooltipExplainer 
+              term="Ensemble Forecasts" 
+              explanation="These predictions combine multiple AI models into one forecast. Each model's contribution is weighted based on its past accuracy (inverse RMSE). This approach is more reliable than using a single model because different models may perform better under different market conditions."
+            />
+          </CardTitle>
+          <CardDescription>
+            Weighted by inverse RMSE with confidence derived from prediction spread.
+            <TooltipExplainer 
+              term="Confidence Scoring" 
+              explanation="Confidence shows how much the different models agree with each other. High confidence (green) means models strongly agree on the direction. Low confidence (red) means models disagree, suggesting uncertain market conditions. Confidence is calculated from the spread (variance) of individual model predictions."
+              size="sm"
+            />
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <ForecastTable data={rows} isLoading={isLoading} lastUpdated={lastUpdated} history={history} />

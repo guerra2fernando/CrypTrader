@@ -108,7 +108,13 @@ export default function StrategiesTab(): JSX.Element {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-xl font-semibold tracking-tight">Simulation Runs</h2>
+        <h2 className="text-xl font-semibold tracking-tight">
+          Simulation Runs
+          <TooltipExplainer 
+            term="Simulation Runs" 
+            explanation="These are historical backtests that show how strategies would have performed on past price data. Each run tests a strategy on a specific symbol and timeframe, tracking its profit/loss, risk metrics, and trade details. This helps evaluate strategy quality before risking real money."
+          />
+        </h2>
         <p className="text-sm text-muted-foreground">Latest backtests pulled from MongoDB. Click a row to inspect equity and trade stats.</p>
       </div>
 
@@ -210,11 +216,25 @@ export default function StrategiesTab(): JSX.Element {
                 <p className="text-2xl font-semibold text-foreground">{(maxDrawdown * 100).toFixed(2)}%</p>
               </div>
               <div className="rounded-lg border bg-muted/30 p-4">
-                <p className="text-xs uppercase text-muted-foreground">Trades</p>
+                <p className="text-xs uppercase text-muted-foreground">
+                  Trades
+                  <TooltipExplainer 
+                    term="Trades" 
+                    explanation="The total number of buy and sell transactions executed during this simulation. More trades isn't necessarily better - quality matters more than quantity."
+                    size="sm"
+                  />
+                </p>
                 <p className="text-2xl font-semibold text-foreground">{trades.length}</p>
               </div>
               <div className="rounded-lg border bg-muted/30 p-4">
-                <p className="text-xs uppercase text-muted-foreground">Hit Rate</p>
+                <p className="text-xs uppercase text-muted-foreground">
+                  Hit Rate
+                  <TooltipExplainer 
+                    term="Hit Rate" 
+                    explanation="The percentage of profitable trades. A 60% hit rate means 6 out of 10 trades made money. Higher is generally better, but a strategy can still be profitable with a lower hit rate if winners are larger than losers."
+                    size="sm"
+                  />
+                </p>
                 <p className="text-2xl font-semibold text-foreground">
                   {trades.length ? ((winners / trades.length) * 100).toFixed(1) : "0.0"}%
                 </p>
@@ -222,7 +242,14 @@ export default function StrategiesTab(): JSX.Element {
             </div>
 
             <div>
-              <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Equity Curve</h3>
+              <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
+                Equity Curve
+                <TooltipExplainer 
+                  term="Equity Curve" 
+                  explanation="This chart shows how the account balance changed over time during the simulation. An upward slope indicates profitability. Smooth curves suggest consistent performance, while jagged curves show high volatility. The ideal curve is smooth and steadily rising."
+                  size="sm"
+                />
+              </h3>
               <Sparkline data={selectedRun.equity_curve} />
             </div>
 

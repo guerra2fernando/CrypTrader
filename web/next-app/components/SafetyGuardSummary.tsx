@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 type SafetyLimits = Record<string, number | string>;
 
@@ -12,6 +12,7 @@ export function SafetyGuardSummary({ safetyLimits = {} }: SafetyGuardSummaryProp
     <Card>
       <CardHeader>
         <CardTitle>Safety Guards</CardTitle>
+        <CardDescription>Read-only snapshot of enforced guardrails pulled from the autonomy settings API.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2 text-sm text-muted-foreground">
         {entries.length === 0 ? <p>No safety guards configured.</p> : null}
@@ -25,4 +26,5 @@ export function SafetyGuardSummary({ safetyLimits = {} }: SafetyGuardSummaryProp
     </Card>
   );
 }
+
 

@@ -22,6 +22,7 @@ import type {
   IntradayCohortDetail,
   PromotionGuardRailCheck,
 } from "@/types/cohorts";
+import { TooltipExplainer } from "./TooltipExplainer";
 import { useToast } from "./ToastProvider";
 
 type DayThreePromotionModalProps = {
@@ -178,7 +179,13 @@ export function DayThreePromotionModal({
     >
       <DialogContent className="max-w-3xl space-y-6">
         <DialogHeader>
-          <DialogTitle>Day-3 Promotion Review</DialogTitle>
+          <DialogTitle>
+            Day-3 Promotion Review
+            <TooltipExplainer 
+              term="Day-3 Promotion Review" 
+              explanation="After an intraday cohort runs for 3 days (Day-3), the system evaluates if the best-performing strategy is ready for live trading. This review checks guard rails (safety limits), performance metrics, and risk controls. Only strategies that pass all checks and demonstrate consistent profitability are promoted. This human-in-the-loop approval prevents rushing unproven strategies into production."
+            />
+          </DialogTitle>
           <DialogDescription>
             Review guard rails, cohort performance, and risk controls before enabling live capital promotion.
           </DialogDescription>
@@ -334,7 +341,14 @@ export function DayThreePromotionModal({
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="promotion-slice">Bankroll slice (%)</Label>
+                <Label htmlFor="promotion-slice">
+                  Bankroll slice (%)
+                  <TooltipExplainer 
+                    term="Bankroll slice" 
+                    explanation="What percentage of your total trading capital to allocate to this strategy. For example, 5% means if you have $10,000, this strategy gets $500 to trade with. Lower percentages reduce risk, higher percentages increase exposure to this strategy's performance."
+                    size="sm"
+                  />
+                </Label>
                 <Input
                   id="promotion-slice"
                   type="number"
@@ -346,7 +360,14 @@ export function DayThreePromotionModal({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="promotion-min-allocation">Minimum allocation (USD)</Label>
+                <Label htmlFor="promotion-min-allocation">
+                  Minimum allocation (USD)
+                  <TooltipExplainer 
+                    term="Minimum allocation" 
+                    explanation="The smallest dollar amount this strategy must have to operate effectively. Even if the bankroll slice would allocate less, this ensures the strategy has enough capital to execute meaningful trades. For example, $50 minimum prevents trying to trade with $5 which wouldn't work."
+                    size="sm"
+                  />
+                </Label>
                 <Input
                   id="promotion-min-allocation"
                   type="number"
@@ -357,7 +378,14 @@ export function DayThreePromotionModal({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="promotion-min-trades">Minimum trade count</Label>
+                <Label htmlFor="promotion-min-trades">
+                  Minimum trade count
+                  <TooltipExplainer 
+                    term="Minimum trade count" 
+                    explanation="How many successful trades this strategy must complete during testing before being eligible for promotion. More trades provide more statistical confidence. For example, 6 trades ensures the strategy proved itself multiple times, not just got lucky once or twice."
+                    size="sm"
+                  />
+                </Label>
                 <Input
                   id="promotion-min-trades"
                   type="number"
@@ -368,7 +396,14 @@ export function DayThreePromotionModal({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="promotion-max-slippage">Max slippage (%)</Label>
+                <Label htmlFor="promotion-max-slippage">
+                  Max slippage (%)
+                  <TooltipExplainer 
+                    term="Max slippage" 
+                    explanation="The maximum acceptable difference between expected and actual trade execution prices. Slippage happens when market prices move between when you decide to trade and when the trade executes. 1% slippage means if you tried to buy at $100, the actual price could be up to $101. Lower slippage indicates better execution quality and liquidity."
+                    size="sm"
+                  />
+                </Label>
                 <Input
                   id="promotion-max-slippage"
                   type="number"
@@ -379,7 +414,14 @@ export function DayThreePromotionModal({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="promotion-max-drawdown">Max parent drawdown (%)</Label>
+                <Label htmlFor="promotion-max-drawdown">
+                  Max parent drawdown (%)
+                  <TooltipExplainer 
+                    term="Max parent drawdown" 
+                    explanation="The maximum acceptable loss from the peak balance during the testing period. Drawdown measures risk - a 12% drawdown means the account dropped 12% from its highest point. Lower drawdowns indicate more stable, less risky strategies. This guard rail prevents promoting strategies that had volatile, scary losses during testing."
+                    size="sm"
+                  />
+                </Label>
                 <Input
                   id="promotion-max-drawdown"
                   type="number"
@@ -390,7 +432,14 @@ export function DayThreePromotionModal({
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="promotion-notes">Approval notes (optional)</Label>
+                <Label htmlFor="promotion-notes">
+                  Approval notes (optional)
+                  <TooltipExplainer 
+                    term="Approval notes" 
+                    explanation="Document your decision-making for audit purposes. Explain why you're promoting this strategy, any concerns you considered, or overrides you're making. These notes create an accountability trail showing you reviewed the metrics thoughtfully. Useful for compliance and learning from past decisions."
+                    size="sm"
+                  />
+                </Label>
                 <Textarea
                   id="promotion-notes"
                   placeholder="Document any overrides or compliance considerations before enabling promotion."

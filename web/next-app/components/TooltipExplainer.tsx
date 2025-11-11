@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { HelpCircle } from "lucide-react";
 
-import { useMode } from "@/lib/mode-context";
 import { cn } from "@/lib/utils";
 
 type TooltipExplainerProps = {
@@ -12,13 +11,7 @@ type TooltipExplainerProps = {
 };
 
 export function TooltipExplainer({ term, explanation, className, size = "sm" }: TooltipExplainerProps) {
-  const { isEasyMode } = useMode();
   const [isHovered, setIsHovered] = useState(false);
-
-  // Only show in Easy Mode
-  if (!isEasyMode) {
-    return null;
-  }
 
   const iconSize = size === "sm" ? "h-3.5 w-3.5" : size === "md" ? "h-4 w-4" : "h-5 w-5";
 
@@ -26,7 +19,7 @@ export function TooltipExplainer({ term, explanation, className, size = "sm" }: 
     <div className={cn("relative inline-flex items-center", className)}>
       <button
         type="button"
-        className="inline-flex items-center text-primary hover:text-primary/80 focus:outline-none"
+        className="inline-flex items-center text-zinc-500/50 hover:text-primary/80 focus:outline-none"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         aria-label={`Explanation for ${term}`}

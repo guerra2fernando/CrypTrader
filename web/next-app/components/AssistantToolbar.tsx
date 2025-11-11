@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 
 type AssistantToolbarProps = {
   query: string;
@@ -57,6 +58,11 @@ export function AssistantToolbar({
         <div className="space-y-2">
           <Label htmlFor="assistant-query" className="text-xs uppercase text-muted-foreground">
             Ask the assistant
+            <TooltipExplainer 
+              term="Ask the assistant" 
+              explanation="Type your question in plain English. The assistant understands context about your trading system - strategies, performance, forecasts, and settings. It will search relevant data to provide evidence-based answers. You can ask 'why' questions, request explanations, or get trading recommendations. Optional context fields (symbol, horizon, date, strategy) help narrow the search."
+              size="sm"
+            />
           </Label>
           <Textarea
             id="assistant-query"
@@ -71,6 +77,11 @@ export function AssistantToolbar({
           <div className="space-y-1.5">
             <Label htmlFor="assistant-symbol" className="text-xs uppercase text-muted-foreground">
               Symbol
+              <TooltipExplainer 
+                term="Symbol (context)" 
+                explanation="Optionally specify which cryptocurrency pair to focus on (e.g., BTC/USDT, ETH/USD). This narrows the assistant's search to data about that specific symbol. Leave blank for questions spanning all symbols."
+                size="sm"
+              />
             </Label>
             <Input
               id="assistant-symbol"

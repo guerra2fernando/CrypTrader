@@ -2,6 +2,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { useMode } from "@/lib/mode-context";
 import { formatNumber } from "@/lib/utils";
 
@@ -57,7 +58,13 @@ export function OrderBlotter({ orders, onCancel, onSync, onAmend }: OrderBlotter
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Order Blotter</CardTitle>
+        <CardTitle>
+          Order Blotter
+          <TooltipExplainer 
+            term="Order Blotter" 
+            explanation="The order blotter is a real-time log of all your trading orders. It shows order status (new, filled, canceled), quantities, prices, and execution details. You can sync orders to check exchange status, amend prices/quantities for open orders, or cancel orders that haven't executed yet. Think of it as your order command center."
+          />
+        </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <Table>

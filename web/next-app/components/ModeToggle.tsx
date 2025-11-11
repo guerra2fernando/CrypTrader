@@ -27,11 +27,11 @@ export function ModeToggle(): JSX.Element | null {
           isEasyMode && "bg-background shadow-sm",
         )}
         onClick={() => setMode("easy")}
-        aria-label="Switch to Easy Mode"
-        title="Easy Mode - Guided experience with explanations"
+        aria-label="Switch to Normal Mode"
+        title="Normal Mode - Guided experience with explanations"
       >
         <Sparkles className="h-3.5 w-3.5" />
-        <span className="hidden sm:inline">Easy</span>
+        <span className="hidden sm:inline">Normal</span>
       </Button>
       <Button
         variant="ghost"

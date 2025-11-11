@@ -1,4 +1,5 @@
 import { EmptyState } from "@/components/EmptyState";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMode } from "@/lib/mode-context";
 
@@ -35,7 +36,14 @@ export function ExperimentDetailPanel({ experiment }: ExperimentDetailPanelProps
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Experiment Details</CardTitle>
+          <CardTitle>
+            Experiment Details
+            <TooltipExplainer 
+              term="Experiment Details" 
+              explanation="Detailed breakdown of a specific strategy experiment including performance metrics, mutations applied, features used, and notes. This helps understand what changed from the parent strategy and how those changes affected performance. Use this to learn which types of mutations improve results."
+              size="sm"
+            />
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <EmptyState
@@ -58,7 +66,14 @@ export function ExperimentDetailPanel({ experiment }: ExperimentDetailPanelProps
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold text-foreground">{experiment.experiment_id}</CardTitle>
+        <CardTitle className="text-lg font-semibold text-foreground">
+          {experiment.experiment_id}
+          <TooltipExplainer 
+            term="Experiment ID" 
+            explanation="Unique identifier for this specific strategy test. The ID helps track this experiment across the system - in logs, reports, and the lineage graph. Each experiment represents testing one specific combination of strategy parameters to see how it performs."
+            size="sm"
+          />
+        </CardTitle>
         <p className="text-xs text-muted-foreground">
           {metadata.model_type ?? "Unknown model"} · {metadata.horizon ?? "—"} horizon
         </p>

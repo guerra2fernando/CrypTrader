@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -86,12 +87,28 @@ export default function ExperimentsTab(): JSX.Element {
 
       <Card>
         <CardHeader>
-          <CardTitle>Experiment Defaults</CardTitle>
+          <CardTitle>
+            Experiment Defaults
+            <TooltipExplainer 
+              term="Experiment Defaults" 
+              explanation="These are the default settings used when running strategy experiments. The evolution engine uses these to test and evolve trading strategies automatically. These parameters control how the genetic algorithm explores the strategy space."
+            />
+          </CardTitle>
           <CardDescription>Used by `/api/experiments/run` when parameters are omitted.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <Field label="Symbol" value={form.symbol} onChange={(value) => updateField("symbol", value)} />
-          <Field label="Interval" value={form.interval} onChange={(value) => updateField("interval", value)} />
+          <Field 
+            label="Symbol" 
+            value={form.symbol} 
+            onChange={(value) => updateField("symbol", value)}
+            explanation="The cryptocurrency trading pair to test strategies on (e.g., BTC/USDT, ETH/USD). This is the market where experiments will run."
+          />
+          <Field 
+            label="Interval" 
+            value={form.interval} 
+            onChange={(value) => updateField("interval", value)}
+            explanation="The timeframe for each price candle (e.g., 1m = 1 minute, 5m = 5 minutes, 1h = 1 hour). Shorter intervals mean more trading opportunities but also more noise."
+          />
           <Field
             type="number"
             label="Accounts"
@@ -99,6 +116,7 @@ export default function ExperimentsTab(): JSX.Element {
             min={1}
             max={200}
             onChange={(value) => updateField("accounts", Number(value))}
+            explanation="How many virtual trading accounts to simulate in parallel during each experiment. More accounts provide better statistical confidence but take longer to run."
           />
           <Field
             type="number"
@@ -107,6 +125,7 @@ export default function ExperimentsTab(): JSX.Element {
             min={1}
             max={20}
             onChange={(value) => updateField("mutations_per_parent", Number(value))}
+            explanation="How many variations (children) to generate from each successful strategy (parent). Higher values explore more possibilities but increase computation time."
           />
           <Field
             type="number"
@@ -115,6 +134,7 @@ export default function ExperimentsTab(): JSX.Element {
             min={1}
             max={20}
             onChange={(value) => updateField("champion_limit", Number(value))}
+            explanation="The maximum number of top-performing strategies to keep as 'champions' for breeding the next generation. This balances diversity with quality."
           />
           <Field
             type="number"
@@ -124,6 +144,7 @@ export default function ExperimentsTab(): JSX.Element {
             min={0}
             max={10}
             onChange={(value) => updateField("auto_promote_threshold", Number(value))}
+            explanation="The minimum percentage improvement (%) a strategy must show over the baseline before it's automatically promoted to live trading. Set to 2.0 for 2% improvement required."
           />
           <Field
             type="number"
@@ -133,6 +154,7 @@ export default function ExperimentsTab(): JSX.Element {
             min={0}
             max={1}
             onChange={(value) => updateField("min_confidence", Number(value))}
+            explanation="The minimum confidence score (0.0 to 1.0) a strategy must achieve to be considered viable. Higher values mean stricter quality requirements. 0.6 = 60% confidence."
           />
           <Field
             type="number"
@@ -142,6 +164,7 @@ export default function ExperimentsTab(): JSX.Element {
             min={0}
             max={0.5}
             onChange={(value) => updateField("min_return", Number(value))}
+            explanation="The minimum return (as a decimal) a strategy must generate to be kept in the pool. For example, 0.001 means 0.1% minimum return per trade or period."
           />
           <Field
             type="number"
@@ -150,10 +173,17 @@ export default function ExperimentsTab(): JSX.Element {
             min={1}
             max={500}
             onChange={(value) => updateField("max_queue", Number(value))}
+            explanation="The maximum number of strategy candidates that can wait in the testing queue. This prevents the queue from growing too large when experiments run faster than evaluations."
           />
 
           <div className="md:col-span-2 lg:col-span-3 space-y-2">
-            <Label htmlFor="families">Strategy families</Label>
+            <Label htmlFor="families">
+              Strategy families
+              <TooltipExplainer 
+                term="Strategy families" 
+                explanation="The base strategy templates to start from (e.g., 'ema-cross' for exponential moving average crossover strategies). Each family represents a different trading approach that can be evolved and optimized. Enter one family name per line." 
+              />
+            </Label>
             <Textarea
               id="families"
               rows={3}
@@ -187,7 +217,13 @@ export default function ExperimentsTab(): JSX.Element {
 
       <Card>
         <CardHeader>
-          <CardTitle>Current Defaults</CardTitle>
+          <CardTitle>
+            Current Defaults
+            <TooltipExplainer 
+              term="Current Defaults" 
+              explanation="This is a read-only summary of your current experiment settings. These values are actively being used by the system when running new experiments. Any changes you make above will be reflected here after saving."
+            />
+          </CardTitle>
           <CardDescription>Snapshot of values used for experiment orchestration.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-2 text-sm sm:grid-cols-2 md:grid-cols-3">
@@ -215,13 +251,17 @@ type FieldProps = {
   min?: number;
   max?: number;
   step?: number;
+  explanation?: string;
 };
 
-function Field({ label, value, onChange, type = "text", min, max, step }: FieldProps) {
+function Field({ label, value, onChange, type = "text", min, max, step, explanation }: FieldProps) {
   const id = label.toLowerCase().replace(/\s+/g, "-");
   return (
     <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
+      <Label htmlFor={id}>
+        {label}
+        {explanation && <TooltipExplainer term={label} explanation={explanation} />}
+      </Label>
       <Input id={id} type={type} value={value} min={min} max={max} step={step} onChange={(event) => onChange(event.target.value)} />
     </div>
   );

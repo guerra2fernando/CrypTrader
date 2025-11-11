@@ -1,4 +1,4 @@
-"""MongoDB client helpers used across Phase 0 modules."""
+"""MongoDB client helpers used across core data modules."""
 from __future__ import annotations
 
 import os

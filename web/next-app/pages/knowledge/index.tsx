@@ -7,6 +7,7 @@ import { ErrorMessage } from "@/components/ErrorMessage";
 import { InsightCard } from "@/components/InsightCard";
 import { KnowledgeSearchInput } from "@/components/KnowledgeSearchInput";
 import { KnowledgeTimeline } from "@/components/KnowledgeTimeline";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { useMode } from "@/lib/mode-context";
 import { fetcher } from "@/lib/api";
 
@@ -54,9 +55,27 @@ export default function KnowledgePage() {
 
   return (
     <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold text-foreground">
+          Knowledge Base
+          <TooltipExplainer 
+            term="Knowledge Base" 
+            explanation="The knowledge base is the system's memory - automatically generated insights from trading history. After each period, the system analyzes what strategies worked (winners), what didn't (losers), and discovers patterns in the data. It learns which technical indicators correlated with success and generates actionable recommendations. This historical wisdom improves future decision-making."
+          />
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Browse historical insights, search for patterns, and review automatically generated learnings from past trading periods.
+        </p>
+      </div>
       <Card>
         <CardHeader>
-          <CardTitle>Knowledge Browser</CardTitle>
+          <CardTitle>
+            Knowledge Browser
+            <TooltipExplainer 
+              term="Knowledge Browser" 
+              explanation="Search through all historical insights using keywords. The system indexes summaries, strategy names, and patterns so you can find specific learnings. For example, search for 'BTC' to see all insights about Bitcoin, or 'high volatility' to find patterns during volatile markets."
+            />
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <KnowledgeSearchInput value={query} onChange={setQuery} />
@@ -126,7 +145,13 @@ export default function KnowledgePage() {
             {correlations.length ? (
               <Card>
                 <CardHeader>
-                  <CardTitle>Feature Correlations</CardTitle>
+                  <CardTitle>
+                    Feature Correlations
+                    <TooltipExplainer 
+                      term="Feature Correlations" 
+                      explanation="This shows which technical indicators and market features had the strongest relationship with profitable trades during this period. Higher percentages mean that feature was more predictive of success. For example, if 'RSI_14' shows 45%, the RSI indicator was a strong predictor. Use this to understand what market conditions mattered most."
+                    />
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 text-xs text-muted-foreground">
                   {correlations.map(([feature, value]) => (

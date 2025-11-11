@@ -16,7 +16,6 @@ type Props = {
 
 const EASY_MODE_NAV_ITEMS = [
   { href: "/", label: "Dashboard" },
-  { href: "/get-started", label: "Get Started" },
   { href: "/trading", label: "Trading" },
   { href: "/insights", label: "Insights" },
   { href: "/assistant", label: "Assistant" },

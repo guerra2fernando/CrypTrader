@@ -10,6 +10,7 @@ import { type ForecastRow } from "@/components/ForecastTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { useMode } from "@/lib/mode-context";
 import { fetcher } from "@/lib/api";
 
@@ -91,7 +92,13 @@ export default function InsightsPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" />
-            <CardTitle>What the System Thinks</CardTitle>
+            <CardTitle>
+              What the System Thinks
+              <TooltipExplainer 
+                term="What the System Thinks" 
+                explanation="These are the AI's predictions about which way cryptocurrency prices will move in the near future. The system analyzes patterns, indicators, and market data to forecast whether prices will go up (positive %) or down (negative %). Higher percentages mean the system expects bigger price movements."
+              />
+            </CardTitle>
           </div>
           <CardDescription>
             Price predictions for the next hour. Positive values mean prices are expected to go up, negative means down.
@@ -139,7 +146,13 @@ export default function InsightsPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-primary" />
-            <CardTitle>Best Strategies</CardTitle>
+            <CardTitle>
+              Best Strategies
+              <TooltipExplainer 
+                term="Best Strategies" 
+                explanation="These are the trading strategies that have performed best in recent simulations. Each strategy is a set of rules for when to buy and sell. The system automatically tests many strategies and shows you the ones making the most profit. The 'risk-adjusted return' (Sharpe ratio) tells you how much profit a strategy makes relative to its risk - higher is better."
+              />
+            </CardTitle>
           </div>
           <CardDescription>
             Top performing trading strategies based on recent tests. Higher profit means better performance.
@@ -186,7 +199,13 @@ export default function InsightsPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-primary" />
-            <CardTitle>Get Recommendations</CardTitle>
+            <CardTitle>
+              Get Recommendations
+              <TooltipExplainer 
+                term="Get Recommendations" 
+                explanation="The AI assistant combines all the system's knowledge - forecasts, strategies, market conditions - to give you personalized advice. You can ask questions in plain English like 'What should I trade right now?' or 'Is this a good time to buy Bitcoin?' The assistant explains its reasoning in simple terms."
+              />
+            </CardTitle>
           </div>
           <CardDescription>
             Ask the AI assistant for personalized trading recommendations based on current market conditions.

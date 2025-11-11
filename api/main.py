@@ -21,7 +21,7 @@ from api.routes import (
     risk,
 )
 
-app = FastAPI(title="Lenxys Phase 0 API")
+app = FastAPI(title="Lenxys Core API")
 
 app.add_middleware(
     CORSMiddleware,

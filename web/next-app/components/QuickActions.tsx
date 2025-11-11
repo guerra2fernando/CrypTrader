@@ -2,6 +2,7 @@ import React, { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 
 const QUICK_PROMPTS: Array<{ label: string; prompt: string }> = [
   {
@@ -52,7 +53,14 @@ export function QuickActions({
   return (
     <div className="space-y-4 rounded-lg border border-border bg-background/60 p-3">
       <div>
-        <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Quick prompts</h4>
+        <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Quick prompts
+          <TooltipExplainer 
+            term="Quick prompts" 
+            explanation="Pre-written questions you can use to quickly ask the AI assistant common queries about system performance, confidence levels, and recent changes. Click any prompt to instantly ask that question without typing it yourself. These are starting points - you can still ask anything you want in your own words."
+            size="sm"
+          />
+        </h4>
         <div className="mt-2 flex flex-wrap gap-2">
           {QUICK_PROMPTS.map((item) => (
             <button
@@ -68,7 +76,14 @@ export function QuickActions({
       </div>
 
       <div>
-        <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Intraday automation</h4>
+        <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Intraday automation
+          <TooltipExplainer 
+            term="Intraday automation" 
+            explanation="Quick actions to launch and manage intraday strategy cohorts. 'Launch cohort' starts a group of strategies trading on minute/hour timeframes with the specified bankroll. 'Review Day-3 promotion' opens the approval workflow for strategies that have completed their 3-day testing period and passed guard rails. These shortcuts streamline common workflow operations."
+            size="sm"
+          />
+        </h4>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <Input
             type="number"

@@ -1,6 +1,7 @@
 /* eslint-disable */
 // @ts-nocheck
 import { EmptyState } from "@/components/EmptyState";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMode } from "@/lib/mode-context";
 
@@ -26,11 +27,17 @@ export function AlertStream({ alerts }: AlertStreamProps) {
   const { isEasyMode } = useMode();
 
   return (
-    <Card className="h-full">
+    <Card className="flex h-full max-h-[24rem] flex-col overflow-hidden">
       <CardHeader>
-        <CardTitle>Alert Stream</CardTitle>
+        <CardTitle>
+          Alert Stream
+          <TooltipExplainer 
+            term="Alert Stream" 
+            explanation="Real-time notifications about important trading events - execution alerts, risk breaches, order fills, strategy promotions, or system errors. Color-coded by severity: green (success), yellow (warning), red (error), blue (info). Scroll through to see recent alerts. These help you stay informed about what's happening without constantly checking individual dashboards."
+          />
+        </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="flex-1 space-y-3 overflow-y-auto pr-1">
         {alerts.length === 0 ? (
           <EmptyState
             variant="default"

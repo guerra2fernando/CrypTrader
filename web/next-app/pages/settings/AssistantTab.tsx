@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -121,7 +122,13 @@ export default function AssistantTab(): JSX.Element {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>LLM provider</CardTitle>
+          <CardTitle>
+            LLM provider
+            <TooltipExplainer 
+              term="LLM provider" 
+              explanation="Choose which AI language model powers the assistant's explanations and recommendations. OpenAI (GPT) and Google (Gemini) offer different capabilities and costs. Select 'Disabled' to run the system without AI assistance, relying only on algorithmic strategies."
+            />
+          </CardTitle>
           <CardDescription>Select which model powers explanations. Keep disabled for fully offline mode.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -141,7 +148,13 @@ export default function AssistantTab(): JSX.Element {
           </div>
           <div className="grid gap-2 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="assistant-model">Model override</Label>
+              <Label htmlFor="assistant-model">
+                Model override
+                <TooltipExplainer 
+                  term="Model override" 
+                  explanation="Optionally specify a particular AI model version to use (e.g., 'gpt-4o-mini' or 'gemini-pro'). Leave blank to use the provider's default recommended model. Different models have different capabilities, speeds, and costs. Smaller models are faster and cheaper, larger models are more capable."
+                />
+              </Label>
               <Input
                 id="assistant-model"
                 value={draft.model ?? ""}
@@ -150,7 +163,13 @@ export default function AssistantTab(): JSX.Element {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="assistant-redactions">Redaction rules (comma separated)</Label>
+              <Label htmlFor="assistant-redactions">
+                Redaction rules (comma separated)
+                <TooltipExplainer 
+                  term="Redaction rules" 
+                  explanation="Sensitive field names to automatically remove from logs and AI prompts for security (e.g., 'api_key', 'wallet_address', 'private_key'). This prevents accidentally exposing secrets in logs or to the AI provider. Enter multiple rules separated by commas."
+                />
+              </Label>
               <Input
                 id="assistant-redactions"
                 value={draft.redaction_rules.join(", ")}
@@ -172,12 +191,24 @@ export default function AssistantTab(): JSX.Element {
 
       <Card>
         <CardHeader>
-          <CardTitle>Grounding rules</CardTitle>
+          <CardTitle>
+            Grounding rules
+            <TooltipExplainer 
+              term="Grounding rules" 
+              explanation="Controls how the AI assistant finds and uses relevant information to answer questions. 'Grounding' means providing the AI with specific facts and data from your system rather than letting it rely solely on general knowledge. This makes responses more accurate and trustworthy."
+            />
+          </CardTitle>
           <CardDescription>Control how much evidence is retrieved for each query.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="assistant-max-evidence">Max evidence items</Label>
+            <Label htmlFor="assistant-max-evidence">
+              Max evidence items
+              <TooltipExplainer 
+                term="Max evidence items" 
+                explanation="How many pieces of supporting data (trades, reports, performance metrics) to fetch when answering a question. More evidence gives the AI more context for better answers but takes longer to process. For example, 10 means the AI will review up to 10 relevant data points before responding."
+              />
+            </Label>
             <Input
               id="assistant-max-evidence"
               type="number"
@@ -189,7 +220,13 @@ export default function AssistantTab(): JSX.Element {
             <p className="text-xs text-muted-foreground">Higher values provide more context at the cost of latency.</p>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="assistant-lookback">Lookback window (days)</Label>
+            <Label htmlFor="assistant-lookback">
+              Lookback window (days)
+              <TooltipExplainer 
+                term="Lookback window" 
+                explanation="How far back in time to search for relevant data when answering questions. For example, 30 days means the assistant will only consider trades, strategies, and reports from the last month. Shorter windows give more recent data, longer windows provide more historical context."
+              />
+            </Label>
             <Input
               id="assistant-lookback"
               type="number"
@@ -204,13 +241,25 @@ export default function AssistantTab(): JSX.Element {
 
       <Card>
         <CardHeader>
-          <CardTitle>Trade approvals</CardTitle>
+          <CardTitle>
+            Trade approvals
+            <TooltipExplainer 
+              term="Trade approvals" 
+              explanation="Controls how the system handles trade recommendations from the AI assistant. You can require manual approval for each trade, automatically approve small trades, and add security layers like multi-factor authentication. These settings help balance automation convenience with safety and control."
+            />
+          </CardTitle>
           <CardDescription>Configure how recommendation approvals behave.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted/30 p-3">
             <div>
-              <p className="text-sm font-medium text-foreground">Auto-execute after approval</p>
+              <p className="text-sm font-medium text-foreground">
+                Auto-execute after approval
+                <TooltipExplainer 
+                  term="Auto-execute after approval" 
+                  explanation="When enabled, approved trades are immediately executed without requiring a second confirmation. When disabled, you'll need to confirm again after approving. This is useful for high-trust scenarios where you want quick execution."
+                />
+              </p>
               <p className="text-xs text-muted-foreground">
                 If enabled, approvals trigger immediate execution (Phase 5) without extra confirmation.
               </p>
@@ -222,7 +271,13 @@ export default function AssistantTab(): JSX.Element {
           </div>
           <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted/30 p-3">
             <div>
-              <p className="text-sm font-medium text-foreground">Require MFA / PIN</p>
+              <p className="text-sm font-medium text-foreground">
+                Require MFA / PIN
+                <TooltipExplainer 
+                  term="Require MFA / PIN" 
+                  explanation="Adds an extra security layer by requiring a multi-factor authentication code or PIN before any trade can be approved. This protects against unauthorized access or accidental approvals. Recommended for live trading accounts."
+                />
+              </p>
               <p className="text-xs text-muted-foreground">Prompts for MFA code before approval is recorded.</p>
             </div>
             <Checkbox
@@ -231,7 +286,13 @@ export default function AssistantTab(): JSX.Element {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="assistant-threshold">Approval threshold (USD)</Label>
+            <Label htmlFor="assistant-threshold">
+              Approval threshold (USD)
+              <TooltipExplainer 
+                term="Approval threshold" 
+                explanation="The maximum dollar amount that can be traded with a single approval. Trades larger than this will require additional manual confirmation even if auto-execute is enabled. For example, $1000 means trades over $1000 need extra scrutiny. Set to 0 for no limit."
+              />
+            </Label>
             <Input
               id="assistant-threshold"
               type="number"
@@ -242,7 +303,13 @@ export default function AssistantTab(): JSX.Element {
             <p className="text-xs text-muted-foreground">Approvals above this amount require manual confirmation.</p>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="assistant-auto-approve">Auto-approve below (USD)</Label>
+            <Label htmlFor="assistant-auto-approve">
+              Auto-approve below (USD)
+              <TooltipExplainer 
+                term="Auto-approve below" 
+                explanation="Trades smaller than this amount are automatically approved without your manual confirmation. For example, $50 means any trade under $50 will execute automatically if auto-execute is enabled. This is useful for small test trades or high-frequency strategies. Set to 0 to require approval for all trades."
+              />
+            </Label>
             <Input
               id="assistant-auto-approve"
               type="number"
@@ -257,12 +324,24 @@ export default function AssistantTab(): JSX.Element {
 
       <Card>
         <CardHeader>
-          <CardTitle>Notifications</CardTitle>
+          <CardTitle>
+            Notifications
+            <TooltipExplainer 
+              term="Notifications" 
+              explanation="Choose how and where you want to receive alerts about trades, approvals, and system events. Multiple channels can be enabled simultaneously to ensure you never miss important notifications. Different channels are useful for different urgency levels (e.g., Slack for urgent alerts, email for daily summaries)."
+            />
+          </CardTitle>
           <CardDescription>Choose which channels receive assistant alerts and approvals.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="assistant-notifications">Channels (comma separated)</Label>
+            <Label htmlFor="assistant-notifications">
+              Channels (comma separated)
+              <TooltipExplainer 
+                term="Notification channels" 
+                explanation="Where to send notifications. 'in_app' shows alerts in the dashboard, 'email' sends to your registered email, 'slack' posts to a Slack webhook. Separate multiple channels with commas. Note: External channels like email and Slack require additional webhook or API configuration to work."
+              />
+            </Label>
             <Textarea
               id="assistant-notifications"
               rows={2}
@@ -286,4 +365,5 @@ export default function AssistantTab(): JSX.Element {
     </div>
   );
 }
+
 

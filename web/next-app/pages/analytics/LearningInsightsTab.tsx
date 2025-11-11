@@ -6,6 +6,7 @@ import useSWR from "swr";
 import { ErrorMessage } from "@/components/ErrorMessage";
 import { InsightsTabs } from "@/components/InsightsTabs";
 import { SuccessState } from "@/components/SuccessState";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetcher, postJson } from "@/lib/api";
@@ -153,13 +154,24 @@ export default function LearningInsightsTab() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight">Learning Insights</h2>
+          <h2 className="text-xl font-semibold tracking-tight">
+            Learning Insights
+            <TooltipExplainer 
+              term="Learning Insights" 
+              explanation="This is the meta-learning layer that learns from all your strategies' performance. It trains models to predict which strategies will work best, allocates resources to the most promising approaches, and detects when strategies are overfitting (performing well in tests but poorly in reality). This adaptive system helps the platform continuously improve its decision-making."
+            />
+          </h2>
           <p className="text-sm text-muted-foreground">
             Meta-model diagnostics, allocator decisions, and overfitting alerts from the adaptive intelligence loop.
           </p>
         </div>
         <Button onClick={runCycle} disabled={cycleStatus.running}>
           {cycleStatus.running ? "Running Cycle…" : "Run Learning Cycle"}
+          <TooltipExplainer 
+            term="Run Learning Cycle" 
+            explanation="This executes the complete learning cycle: (1) trains the meta-model on recent strategy performance, (2) generates new candidate strategies based on what's working, (3) rebalances portfolio allocations, and (4) evaluates all strategies for overfitting. This helps the system adapt to changing market conditions and optimize its approach over time."
+            size="sm"
+          />
         </Button>
       </div>
 

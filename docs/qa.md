@@ -33,7 +33,7 @@
 
 ## Does the system pull minute data for the coins? Is the data real?
 
-- On the dashboard’s “Phase 0 Bootstrap” card (`Dashboard → Phase 0 Bootstrap → Fetch minute-level history` button) you can ingest historical 1 minute, 1 hour, and 1 day candles for the symbols you track. The inventory table highlights which pairs and intervals are already populated.
+- On the dashboard’s “Data Bootstrap Controls” card (`Dashboard → Data Bootstrap → Fetch minute-level history` button) you can ingest historical 1 minute, 1 hour, and 1 day candles for the symbols you track. The inventory table highlights which pairs and intervals are already populated.
 - Once bootstrapped, the trading UI opens a WebSocket (`Trading` page) and polls every 15–30 seconds elsewhere, so you are seeing live exchange data routed through our backend. Forecast batches refresh automatically every 30 seconds on `Analytics → Forecasts`.
 
 ## Are the orders executed by the AI already implemented on the exchanges?

@@ -2,6 +2,7 @@
 // @ts-nocheck
 import useSWR from "swr";
 
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { AccountSelector } from "@/components/AccountSelector";
 import { SettingsTradingForm } from "@/components/SettingsTradingForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,7 +49,13 @@ export default function TradingTab(): JSX.Element {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Account Modes</CardTitle>
+          <CardTitle>
+            Account Modes
+            <TooltipExplainer 
+              term="Account Modes" 
+              explanation="Choose which trading environment to use. 'Paper' mode simulates trades with fake money for testing strategies safely. 'Live' mode executes real trades with real money. Always test strategies in paper mode before going live. The default mode is used when the system makes autonomous trading decisions."
+            />
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <AccountSelector
@@ -65,7 +72,13 @@ export default function TradingTab(): JSX.Element {
 
       <Card>
         <CardHeader>
-          <CardTitle>Alert Test</CardTitle>
+          <CardTitle>
+            Alert Test
+            <TooltipExplainer 
+              term="Alert Test" 
+              explanation="Send a test notification through your configured alert channels (email, Slack, etc.) to verify they're set up correctly. This helps ensure you'll receive important notifications about trades, errors, or system events. Run this after configuring new notification channels."
+            />
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">

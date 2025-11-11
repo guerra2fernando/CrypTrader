@@ -1,4 +1,5 @@
 import { EmptyState } from "@/components/EmptyState";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -45,7 +46,14 @@ export function EvolutionLeaderboardTable({ entries, selectedId, onSelect }: Pro
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="text-base font-semibold">Leaderboard</CardTitle>
+          <CardTitle className="text-base font-semibold">
+            Leaderboard
+            <TooltipExplainer 
+              term="Strategy Leaderboard" 
+              explanation="Ranks all tested trading strategies by their performance metrics. The leaderboard shows which strategies are the most profitable, stable, and aligned with price forecasts. 'Champions' are the current best performers actively trading. Click any strategy to see detailed information about its parameters, trades, and evolution history."
+              size="sm"
+            />
+          </CardTitle>
           <Badge variant="secondary">{rows.length} tracked</Badge>
         </div>
       </CardHeader>

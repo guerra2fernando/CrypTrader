@@ -11,6 +11,7 @@ import { GenomeComparisonPanel } from "@/components/GenomeComparisonPanel";
 import { LineageGraph } from "@/components/LineageGraph";
 import { MutationQueueDrawer } from "@/components/MutationQueueDrawer";
 import { ProgressIndicator } from "@/components/ProgressIndicator";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -163,14 +164,26 @@ export default function EvolutionTab() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-xl font-semibold tracking-tight">Evolution Lab</h2>
+        <h2 className="text-xl font-semibold tracking-tight">
+          Evolution Lab
+          <TooltipExplainer 
+            term="Evolution Lab" 
+            explanation="This is where the system evolves trading strategies using a genetic algorithm. Like biological evolution, successful strategies 'reproduce' by creating variations (mutations). The best performers become champions and can create new generations of strategies. This process continuously searches for better trading approaches."
+          />
+        </h2>
         <p className="text-sm text-muted-foreground">Spawn strategy mutations, monitor fitness, and promote champions.</p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-4">
         <Card className="lg:col-span-3">
           <CardHeader>
-            <CardTitle>Evolution Lab</CardTitle>
+            <CardTitle>
+              Run Experiments
+              <TooltipExplainer 
+                term="Run Experiments" 
+                explanation="This creates and tests new strategy variations. You specify which market (symbol), timeframe (interval), and how many test accounts to run. The system will create mutations of existing champion strategies and test them in parallel simulations to see which ones perform best."
+              />
+            </CardTitle>
             <CardDescription>Spawn strategy mutations, monitor fitness, and promote champions.</CardDescription>
             <div className="flex flex-wrap gap-2 pt-2">
               <Button asChild variant="outline">
@@ -183,18 +196,33 @@ export default function EvolutionTab() {
             <fieldset className="space-y-1">
               <label className="text-xs uppercase text-muted-foreground" htmlFor="symbol">
                 Symbol
+                <TooltipExplainer 
+                  term="Symbol (Evolution)" 
+                  explanation="The cryptocurrency trading pair to test strategies on. For example, BTC/USDT means testing Bitcoin priced in USDT. Strategies are optimized specifically for each symbol's unique price patterns."
+                  size="sm"
+                />
               </label>
               <Input id="symbol" value={symbol} onChange={(event) => setSymbol(event.target.value)} />
             </fieldset>
             <fieldset className="space-y-1">
               <label className="text-xs uppercase text-muted-foreground" htmlFor="interval">
                 Interval
+                <TooltipExplainer 
+                  term="Interval (Evolution)" 
+                  explanation="The timeframe for price data: 1m = 1 minute bars, 5m = 5 minute bars, etc. Shorter intervals are better for day trading strategies, longer intervals for swing trading. Strategies are tuned for specific intervals."
+                  size="sm"
+                />
               </label>
               <Input id="interval" value={interval} onChange={(event) => setInterval(event.target.value)} />
             </fieldset>
             <fieldset className="space-y-1">
               <label className="text-xs uppercase text-muted-foreground" htmlFor="accounts">
                 Accounts
+                <TooltipExplainer 
+                  term="Accounts (Evolution)" 
+                  explanation="How many virtual trading accounts to run in parallel during the test. More accounts mean more reliable statistics (law of large numbers) but take longer to complete. 12-20 accounts is typically a good balance."
+                  size="sm"
+                />
               </label>
               <Input
                 id="accounts"
@@ -211,6 +239,11 @@ export default function EvolutionTab() {
             <div className="flex items-end">
               <Button className="w-full" disabled={isRunning} onClick={handleRunExperiments}>
                 {isRunning ? "Scheduling…" : "Run Experiments"}
+                <TooltipExplainer 
+                  term="Run Experiments Button" 
+                  explanation="Click this to start a new evolution cycle. The system will take your current champion strategies, create variations (mutations), test them all in simulations, and identify which ones perform best. This process typically takes a few minutes depending on the number of accounts and strategies."
+                  size="sm"
+                />
               </Button>
             </div>
             {activeTaskId && (
@@ -227,7 +260,13 @@ export default function EvolutionTab() {
         <div className="space-y-4 lg:col-span-1">
           <Card>
             <CardHeader>
-              <CardTitle>Champions</CardTitle>
+              <CardTitle>
+                Champions
+                <TooltipExplainer 
+                  term="Champions" 
+                  explanation="These are the best performing strategies currently in the system. Champions have proven themselves through simulations and are candidates for live trading. They also serve as 'parents' for creating new strategy variations in the evolution process."
+                />
+              </CardTitle>
               <CardDescription>Highest scoring genomes right now.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
@@ -245,7 +284,13 @@ export default function EvolutionTab() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Learning Insights</CardTitle>
+              <CardTitle>
+                Learning Insights
+                <TooltipExplainer 
+                  term="Learning Insights" 
+                  explanation="This shows what the meta-learning system is currently focused on. The allocator decides how much 'weight' to give each strategy when making predictions or trade decisions. Overfit alerts warn when a strategy that performed well in testing is now underperforming in practice, suggesting it was tuned too specifically to past data."
+                />
+              </CardTitle>
               <CardDescription>Allocator focus & open overfit alerts.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -300,7 +345,13 @@ export default function EvolutionTab() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Queue Status</CardTitle>
+          <CardTitle>
+            Queue Status
+            <TooltipExplainer 
+              term="Queue Status" 
+              explanation="The experiment queue shows all the strategy tests waiting to run or currently running. Pending = waiting to start, Running = actively being tested, Completed = finished successfully, Failed = encountered an error during testing. This helps you monitor the system's workload and identify any issues."
+            />
+          </CardTitle>
           <CardDescription>Breakdown of queued experiments.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3 text-sm">

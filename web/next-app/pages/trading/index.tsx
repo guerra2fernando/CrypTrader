@@ -17,6 +17,7 @@ import { OrderBlotter } from "@/components/OrderBlotter";
 import { PositionsTable } from "@/components/PositionsTable";
 import { RiskGaugeCard } from "@/components/RiskGaugeCard";
 import { TradingTabs } from "@/components/TradingTabs";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { useToast } from "@/components/ToastProvider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -168,6 +169,26 @@ export default function TradingControlCenterPage() {
 
   const risk = mergedSummary?.risk ?? summary?.risk ?? { open_exposure: {}, kill_switch: { armed: false } };
 
+  const symbolShortlist = useMemo(() => {
+    const unique = new Set<string>();
+    (orders ?? []).forEach((order) => {
+      if (order.symbol) {
+        unique.add(order.symbol);
+      }
+    });
+    (positions ?? []).forEach((position) => {
+      if (position.symbol) {
+        unique.add(position.symbol);
+      }
+    });
+    (fills ?? []).forEach((fill) => {
+      if (fill.symbol) {
+        unique.add(fill.symbol);
+      }
+    });
+    return Array.from(unique).sort();
+  }, [orders, positions, fills]);
+
   const handleSubmitOrder = async (payload) => {
     await postJson("/api/trading/orders", payload);
     pushToast({ title: "Order submitted", description: `${payload.side.toUpperCase()} ${payload.symbol}`, variant: "success" });
@@ -243,7 +264,7 @@ export default function TradingControlCenterPage() {
           {isEasyMode ? (
             <GuidedTradingFlow onSubmitOrder={handleGuidedOrder} />
           ) : (
-            <ApprovalWizard onSubmit={handleSubmitOrder} defaultMode={mode} />
+            <ApprovalWizard onSubmit={handleSubmitOrder} defaultMode={mode} symbolOptions={symbolShortlist} />
           )}
           {editingOrder ? (
             <Card className="p-4">
@@ -266,7 +287,14 @@ export default function TradingControlCenterPage() {
           <Card className="space-y-3 p-4">
             <div className="flex items-center justify-between gap-2">
               <div>
-                <div className="text-sm font-semibold text-foreground">Day-3 Promotion</div>
+                <div className="text-sm font-semibold text-foreground">
+                  Day-3 Promotion
+                  <TooltipExplainer 
+                    term="Day-3 Promotion" 
+                    explanation="This is the final stage of strategy validation. After strategies pass Day-1 (basic tests) and Day-2 (extended validation), Day-3 evaluates intraday cohorts for potential promotion to live trading. Only strategies with high confidence and strong performance metrics can be promoted to real trading."
+                    size="sm"
+                  />
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Review intraday cohorts before enabling live promotion.
                 </p>
@@ -329,18 +357,21 @@ export default function TradingControlCenterPage() {
           title="Open Exposure"
           current={risk.open_exposure?.[mode] ?? 0}
           limit={mergedSummary?.risk?.settings?.risk?.max_open_exposure_usd ?? summary?.risk?.settings?.risk?.max_open_exposure_usd ?? 1}
+          tooltip="Open Exposure measures the total value of all your active positions combined. This limit prevents you from having too much money tied up in trades at once, protecting you from overexposure to market risk. If you hit this limit, you'll need to close some positions before opening new ones."
         />
         <RiskGaugeCard
           title="Daily Loss"
           current={Math.abs(mergedSummary?.risk?.daily_loss_usd ?? summary?.risk?.daily_loss_usd ?? 0)}
           limit={mergedSummary?.risk?.settings?.risk?.max_daily_loss_usd ?? summary?.risk?.settings?.risk?.max_daily_loss_usd ?? 1}
           tone={(mergedSummary?.risk?.daily_loss_usd ?? summary?.risk?.daily_loss_usd ?? 0) < 0 ? "warning" : "ok"}
+          tooltip="Daily Loss tracks how much money you've lost today across all trades. This limit acts as a circuit breaker - if you lose too much in one day, trading stops automatically to prevent emotional decision-making and further losses. The limit resets at midnight."
         />
         <RiskGaugeCard
           title="Max Trade Cap"
           current={0}
           limit={mergedSummary?.risk?.settings?.risk?.max_trade_usd ?? summary?.risk?.settings?.risk?.max_trade_usd ?? 1}
           description="Auto-calculated per order."
+          tooltip="Max Trade Cap limits the size of any single trade. This prevents accidentally placing orders that are too large relative to your account size. The system calculates this automatically based on your account balance and risk tolerance to ensure proper position sizing."
         />
       </div>
 

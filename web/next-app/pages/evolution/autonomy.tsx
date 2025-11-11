@@ -12,6 +12,7 @@ import { ExperimentKanbanBoard } from "@/components/ExperimentKanbanBoard";
 import { RollbackModal } from "@/components/RollbackModal";
 import { SchedulerStatusBadge } from "@/components/SchedulerStatusBadge";
 import { SafetyGuardSummary } from "@/components/SafetyGuardSummary";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { fetcher, postJson, putJson } from "@/lib/api";
 import { useWebSocket } from "@/lib/hooks";
 
@@ -125,10 +126,28 @@ export default function EvolutionAutonomyPage() {
 
   return (
     <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold text-foreground">
+          Autonomous Evolution
+          <TooltipExplainer 
+            term="Autonomous Evolution" 
+            explanation="This is the fully automated strategy discovery system. Unlike manual mode where you click 'Run Experiments', autonomous mode continuously generates, tests, and evaluates strategies 24/7. It automatically promotes winners to production and pauses underperformers. Schedulers and safety guardrails ensure quality control. This allows the system to evolve trading strategies without constant human intervention."
+          />
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Monitor continuous strategy evolution with automatic quality control and safety guardrails.
+        </p>
+      </div>
       <div className="grid gap-4 lg:grid-cols-[2fr,1fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Autonomous Evolution Lab</CardTitle>
+            <CardTitle>
+              Evolution Control Panel
+              <TooltipExplainer 
+                term="Evolution Control Panel" 
+                explanation="Control the autonomous evolution system. The scheduler determines when to run experiments (continuously vs scheduled intervals). Auto-promote settings determine if winning strategies are automatically activated for trading or require manual approval. Safety limits prevent promoting strategies with excessive drawdowns or risk metrics."
+              />
+            </CardTitle>
             <p className="text-sm text-muted-foreground">
               Monitor experiment throughput, schedule automation, and promote winning strategies with guardrails.
             </p>
@@ -160,7 +179,14 @@ export default function EvolutionAutonomyPage() {
         <ExperimentDetailPanel experiment={selectedExperiment} />
         <Card>
           <CardHeader>
-            <CardTitle>Actions</CardTitle>
+            <CardTitle>
+              Actions
+              <TooltipExplainer 
+                term="Evolution Actions" 
+                explanation="Manage individual experiments. 'Rollback' reverts a strategy to a previous version if it's underperforming - useful when a mutation made things worse. You can roll back to any point in the strategy's lineage. This is a safety valve for fixing mistakes in the evolution process."
+                size="sm"
+              />
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <Button

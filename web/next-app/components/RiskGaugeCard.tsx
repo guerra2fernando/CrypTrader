@@ -2,6 +2,7 @@
 // @ts-nocheck
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { useMode } from "@/lib/mode-context";
 import { formatNumber, formatPercent } from "@/lib/utils";
 
@@ -11,9 +12,10 @@ type RiskGaugeCardProps = {
   limit: number;
   description?: string;
   tone?: "ok" | "warning" | "critical";
+  tooltip?: string;
 };
 
-export function RiskGaugeCard({ title, current, limit, description, tone = "ok" }: RiskGaugeCardProps) {
+export function RiskGaugeCard({ title, current, limit, description, tone = "ok", tooltip }: RiskGaugeCardProps) {
   const { isEasyMode } = useMode();
   const ratio = limit > 0 ? Math.min(1, current / limit) : 0;
   const percent = ratio * 100;
@@ -51,7 +53,10 @@ export function RiskGaugeCard({ title, current, limit, description, tone = "ok" 
     <Card className="h-full">
       <CardHeader>
         <CardTitle className="flex items-center justify-between text-base">
-          <span>{isEasyMode ? getPlainTitle() : title}</span>
+          <span>
+            {isEasyMode ? getPlainTitle() : title}
+            {tooltip && <TooltipExplainer term={title} explanation={tooltip} size="sm" />}
+          </span>
           <span className="text-sm text-muted-foreground">
             ${formatNumber(current, 2)} / ${formatNumber(limit, 2)}
           </span>

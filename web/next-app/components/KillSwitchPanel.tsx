@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 
 type KillSwitchPanelProps = {
   killSwitch: { armed: boolean; reason?: string | null; actor?: string | null } | null;
@@ -19,7 +20,13 @@ export function KillSwitchPanel({ killSwitch, onArm, onRelease }: KillSwitchPane
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Global Kill Switch</CardTitle>
+        <CardTitle>
+          Global Kill Switch
+          <TooltipExplainer 
+            term="Global Kill Switch" 
+            explanation="This is an emergency stop button for trading. When armed, it immediately cancels all open orders across all modes and freezes the system from placing any new trades. Use this if you need to stop everything immediately - whether due to technical issues, unexpected market conditions, or any other emergency. You must provide a reason for accountability and audit trails."
+          />
+        </CardTitle>
         <CardDescription>
           Cancel open orders and freeze execution instantly. Provide a reason for audit purposes.
         </CardDescription>

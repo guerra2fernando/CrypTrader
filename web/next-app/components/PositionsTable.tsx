@@ -2,6 +2,7 @@
 import { EmptyState } from "@/components/EmptyState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { useMode } from "@/lib/mode-context";
 import { formatNumber } from "@/lib/utils";
 
@@ -50,7 +51,13 @@ export function PositionsTable({ positions, mode }: PositionsTableProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Open Positions — {mode.toUpperCase()}</CardTitle>
+        <CardTitle>
+          Open Positions — {mode.toUpperCase()}
+          <TooltipExplainer 
+            term="Open Positions" 
+            explanation="These are your active cryptocurrency holdings that you've bought but not yet sold (or vice versa for short positions). Each position shows the quantity you own, your average entry price, and your current profit/loss. Unrealized PnL changes as prices move; realized PnL is locked in when you close the position. Positions stay open until you place an offsetting trade."
+          />
+        </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <Table>

@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { AlertStream } from "@/components/AlertStream";
 import { ExposureDonutChart } from "@/components/ExposureDonutChart";
 import { RiskGaugeCard } from "@/components/RiskGaugeCard";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { fetcher, postJson } from "@/lib/api";
@@ -38,22 +39,37 @@ export default function RiskDashboardPage() {
 
   return (
     <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold text-foreground">
+          Risk Dashboard
+          <TooltipExplainer 
+            term="Risk Dashboard" 
+            explanation="This dashboard monitors all your risk metrics in real-time to protect your capital. It tracks position sizes, daily losses, and breaches of safety limits. The system automatically enforces these limits to prevent excessive losses or overexposure. Think of this as your trading safety control center."
+          />
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Monitor exposure limits, track breaches, and review risk metrics across all trading modes.
+        </p>
+      </div>
       <div className="grid gap-4 lg:grid-cols-3">
         <RiskGaugeCard
           title="Open Exposure"
           current={Object.values(openExposure).reduce((sum, value) => sum + value, 0)}
           limit={metrics.max_open_exposure_usd ?? 1}
+          tooltip="Total dollar value of all open positions across all modes. This limit prevents overexposure - having too much capital at risk simultaneously. When you hit this limit, you must close positions before opening new ones."
         />
         <RiskGaugeCard
           title="Daily Loss"
           current={Math.abs(summary?.daily_loss_usd ?? 0)}
           limit={metrics.max_daily_loss_usd ?? 1}
           tone={summary?.daily_loss_usd < 0 ? "warning" : "ok"}
+          tooltip="How much money has been lost today. This circuit breaker stops trading automatically if you hit the daily loss limit, preventing emotional trading and deeper losses. Resets at midnight."
         />
         <RiskGaugeCard
           title="Auto Mode Cap"
           current={summary?.settings?.auto_mode?.max_trade_usd ?? 0}
           limit={metrics.max_trade_usd ?? 1}
+          tooltip="Maximum dollar size for automated trades. This ensures the system can't place orders that are too large for your account. Protects against bugs or miscalculations in automated strategies."
         />
       </div>
 
@@ -64,7 +80,13 @@ export default function RiskDashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Open Breaches</CardTitle>
+          <CardTitle>
+            Open Breaches
+            <TooltipExplainer 
+              term="Open Breaches" 
+              explanation="Risk breaches occur when trading activity violates a safety limit - like exceeding your daily loss cap or position size limit. Each breach must be acknowledged to confirm you're aware of it. Breaches may temporarily halt trading until resolved. This accountability system prevents ignoring important risk events."
+            />
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {breachesList.length === 0 ? (

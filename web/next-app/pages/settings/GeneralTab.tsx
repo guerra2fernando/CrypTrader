@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { CheckCircle2, Loader2, TriangleAlert } from "lucide-react";
 import { useTheme } from "next-themes";
 
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -187,6 +188,9 @@ export default function GeneralTab(): JSX.Element {
   const [bootstrapMessage, setBootstrapMessage] = useState<string | null>(null);
   const [bulkRunMessage, setBulkRunMessage] = useState<string | null>(null);
   const [isBulkRunning, setIsBulkRunning] = useState(false);
+  const [newSymbol, setNewSymbol] = useState<string>("");
+  const [symbolMessage, setSymbolMessage] = useState<string | null>(null);
+  const [isAddingSymbol, setIsAddingSymbol] = useState(false);
 
   const refreshIntervalMs = useMemo(
     () => (settings.autoRefresh.enabled ? Math.max(settings.autoRefresh.intervalSeconds, 5) * 1000 : 0),
@@ -268,6 +272,12 @@ export default function GeneralTab(): JSX.Element {
     fetcher,
     { refreshInterval: 30_000 },
   );
+  const { data: overview, mutate: mutateOverview } = useSWR<{
+    available_symbols: string[];
+    default_symbols: string[];
+    default_intervals: string[];
+    default_lookback_days: number;
+  }>("/api/admin/overview", fetcher);
 
   useEffect(() => {
     if (modelSettings?.horizons?.length) {
@@ -331,6 +341,37 @@ export default function GeneralTab(): JSX.Element {
     }
   };
 
+  const handleAddSymbol = async () => {
+    const trimmedSymbol = newSymbol.trim().toUpperCase();
+    if (!trimmedSymbol) {
+      setSymbolMessage("Please enter a symbol (e.g., BTC/USD, ETH/USD)");
+      return;
+    }
+    
+    // Validate format (should contain a /)
+    if (!trimmedSymbol.includes("/")) {
+      setSymbolMessage("Symbol must be in format like BTC/USD or ETH/USDT");
+      return;
+    }
+
+    setIsAddingSymbol(true);
+    setSymbolMessage(null);
+    try {
+      const response = await postJson("/api/admin/bootstrap", {
+        symbols: [trimmedSymbol],
+        intervals: overview?.default_intervals || ["1m", "5m"],
+        lookback_days: overview?.default_lookback_days || 30,
+      });
+      setSymbolMessage(`Successfully added ${trimmedSymbol} and fetched ${response.ingested?.length || 0} datasets`);
+      setNewSymbol("");
+      await mutateOverview();
+    } catch (error) {
+      setSymbolMessage(error instanceof Error ? error.message : `Failed to add ${trimmedSymbol}`);
+    } finally {
+      setIsAddingSymbol(false);
+    }
+  };
+
   const renderEndpointBadge = (state: EndpointState) => {
     if (state === "ok") {
       return (
@@ -368,7 +409,13 @@ export default function GeneralTab(): JSX.Element {
       <section className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Theme & Appearance</CardTitle>
+            <CardTitle>
+              Theme & Appearance
+              <TooltipExplainer 
+                term="Theme & Appearance" 
+                explanation="Choose how the interface looks. Light mode is easier on the eyes in bright environments, dark mode reduces eye strain in low light, and system mode automatically matches your device's theme preference."
+              />
+            </CardTitle>
             <CardDescription>Switch between light, dark, or system-based themes.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -393,7 +440,13 @@ export default function GeneralTab(): JSX.Element {
 
         <Card>
           <CardHeader>
-            <CardTitle>Auto-refresh</CardTitle>
+            <CardTitle>
+              Auto-refresh
+              <TooltipExplainer 
+                term="Auto-refresh" 
+                explanation="When enabled, the dashboard automatically updates with the latest data at your chosen interval. This keeps information current without manually refreshing the page. Lower intervals (5-30s) keep data fresher but use more resources."
+              />
+            </CardTitle>
             <CardDescription>Control how often dashboards poll the API for fresh data.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -411,7 +464,13 @@ export default function GeneralTab(): JSX.Element {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="refresh-interval">Refresh interval (seconds)</Label>
+              <Label htmlFor="refresh-interval">
+                Refresh interval (seconds)
+                <TooltipExplainer 
+                  term="Refresh interval" 
+                  explanation="How many seconds to wait between automatic data updates. For example, 30 means the page will refresh data every 30 seconds. Shorter intervals keep data more current but increase server load and bandwidth usage."
+                />
+              </Label>
               <Input
                 id="refresh-interval"
                 type="number"
@@ -437,9 +496,91 @@ export default function GeneralTab(): JSX.Element {
       <section>
         <Card>
           <CardHeader>
-            <CardTitle>Data Maintenance</CardTitle>
+            <CardTitle>
+              Symbol Management
+              <TooltipExplainer 
+                term="Symbol Management" 
+                explanation="Manage which cryptocurrency trading pairs (like BTC/USD or ETH/USDT) the system tracks. Adding a symbol downloads historical price data and enables the assistant to trade that cryptocurrency. More symbols provide more opportunities but require more data storage and processing."
+              />
+            </CardTitle>
             <CardDescription>
-              Trigger the Phase 0 bootstrap workflow (seed symbols, ingest candles, rebuild features, run baseline sim, and generate a report).
+              Add new cryptocurrency pairs to track and pull market data for. The system will automatically start fetching price data and calculating features.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {symbolMessage ? (
+              <div className="rounded-lg border border-muted bg-muted/20 p-3 text-sm text-muted-foreground">
+                {symbolMessage}
+              </div>
+            ) : null}
+            
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="new-symbol">Add New Symbol</Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Enter a trading pair (e.g., BTC/USD, ETH/USD, SOL/USDT, DOGE/USD)
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    id="new-symbol"
+                    placeholder="BTC/USD"
+                    value={newSymbol}
+                    onChange={(e) => setNewSymbol(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter") {
+                        handleAddSymbol();
+                      }
+                    }}
+                    disabled={isAddingSymbol}
+                  />
+                  <Button onClick={handleAddSymbol} disabled={isAddingSymbol || !newSymbol.trim()}>
+                    {isAddingSymbol ? "Adding..." : "Add Symbol"}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="rounded-lg border bg-muted/30 p-4">
+                <p className="text-sm font-medium text-foreground mb-2">Current Symbols ({overview?.available_symbols?.length || 0})</p>
+                <div className="flex flex-wrap gap-2">
+                  {overview?.available_symbols?.length ? (
+                    overview.available_symbols.map((symbol) => (
+                      <Badge key={symbol} variant="secondary" className="text-sm">
+                        {symbol}
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-xs text-muted-foreground">No symbols configured yet</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+                <p className="text-xs font-medium text-primary mb-1">How it works:</p>
+                <ul className="space-y-1 text-xs text-muted-foreground">
+                  <li>• Adding a symbol fetches the last {overview?.default_lookback_days || 30} days of market data</li>
+                  <li>• Data is pulled at intervals: {overview?.default_intervals?.join(", ") || "1m, 5m"}</li>
+                  <li>• Features are calculated automatically for model training</li>
+                  <li>• The assistant can only negotiate with coins that have data downloaded</li>
+                  <li>• Once added, data continues to update automatically</li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section>
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              Data Maintenance
+              <TooltipExplainer 
+                term="Data Maintenance" 
+                explanation="This runs the complete data preparation pipeline: downloads historical price data (candles) for all configured symbols, calculates technical indicators and features, runs a baseline simulation to test the setup, and generates a performance report. Run this when first setting up the system or adding new trading pairs."
+              />
+            </CardTitle>
+            <CardDescription>
+              Run the initial data setup pipeline (seed symbols, ingest candles, rebuild features, run the baseline sim, and generate a report).
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -456,17 +597,18 @@ export default function GeneralTab(): JSX.Element {
                     const response = await postJson("/api/admin/bootstrap", {});
                     const ingested = Array.isArray(response?.ingested) ? response.ingested.length : 0;
                     setBootstrapMessage(
-                      `Bootstrap complete (${ingested} ingest batches). Latest report: ${response?.report_path ?? "n/a"}.`,
+                      `Data setup complete (${ingested} ingest batches). Latest report: ${response?.report_path ?? "n/a"}.`,
                     );
+                    await mutateOverview();
                   } catch (error) {
-                    setBootstrapMessage(error instanceof Error ? error.message : "Failed to run bootstrap.");
+                    setBootstrapMessage(error instanceof Error ? error.message : "Failed to run data setup.");
                   } finally {
                     setIsBootstrapping(false);
                   }
                 }}
                 disabled={isBootstrapping}
               >
-                {isBootstrapping ? "Bootstrapping…" : "Run Bootstrap"}
+                {isBootstrapping ? "Setting up…" : "Run Data Setup"}
               </Button>
               <p className="text-xs text-muted-foreground">
                 Monitor progress on the dashboard (`/`), strategies table, and recent reports while the job runs.
@@ -479,7 +621,13 @@ export default function GeneralTab(): JSX.Element {
       <section>
         <Card>
           <CardHeader>
-            <CardTitle>Model Retraining Preferences</CardTitle>
+            <CardTitle>
+              Model Retraining Preferences
+              <TooltipExplainer 
+                term="Model Retraining Preferences" 
+                explanation="Machine learning models that predict price movements need periodic retraining with fresh data to stay accurate. These settings control how often models are retrained (daily/weekly/monthly), how much historical data to use for training, and the minimum performance threshold for activating a model. Each horizon (short/mid/long) can have different settings."
+              />
+            </CardTitle>
             <CardDescription>
               Configure per-horizon training windows, cadences, and activation thresholds saved in MongoDB.
             </CardDescription>
@@ -503,7 +651,13 @@ export default function GeneralTab(): JSX.Element {
                       </div>
 
                       <div className="space-y-1">
-                        <Label htmlFor={`train-${item.name}`}>Train window (days)</Label>
+                        <Label htmlFor={`train-${item.name}`}>
+                          Train window (days)
+                          <TooltipExplainer 
+                            term="Train window" 
+                            explanation="How many days of historical price data to use when training the model. More days provide more data but may include outdated patterns. For example, 365 means the model learns from the past year of trading data."
+                          />
+                        </Label>
                         <Input
                           id={`train-${item.name}`}
                           type="number"
@@ -515,7 +669,13 @@ export default function GeneralTab(): JSX.Element {
                       </div>
 
                       <div className="space-y-1">
-                        <Label htmlFor={`cadence-${item.name}`}>Retrain cadence</Label>
+                        <Label htmlFor={`cadence-${item.name}`}>
+                          Retrain cadence
+                          <TooltipExplainer 
+                            term="Retrain cadence" 
+                            explanation="How often to retrain the model with fresh data. Daily keeps models most current but uses more computing resources. Weekly or monthly is suitable for longer-term strategies. More frequent retraining helps models adapt to changing market conditions."
+                          />
+                        </Label>
                         <select
                           id={`cadence-${item.name}`}
                           className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -529,7 +689,13 @@ export default function GeneralTab(): JSX.Element {
                       </div>
 
                       <div className="space-y-1">
-                        <Label htmlFor={`threshold-${item.name}`}>Activation threshold (%)</Label>
+                        <Label htmlFor={`threshold-${item.name}`}>
+                          Activation threshold (%)
+                          <TooltipExplainer 
+                            term="Activation threshold" 
+                            explanation="The minimum accuracy percentage a model must achieve in testing before it's activated for making predictions. For example, 65% means the model must be correct at least 65% of the time. Higher thresholds ensure only high-quality models are used but may reject models that could still be profitable."
+                          />
+                        </Label>
                         <Input
                           id={`threshold-${item.name}`}
                           type="number"
@@ -636,7 +802,13 @@ export default function GeneralTab(): JSX.Element {
       <section>
         <Card>
           <CardHeader>
-            <CardTitle>Retraining Jobs</CardTitle>
+            <CardTitle>
+              Retraining Jobs
+              <TooltipExplainer 
+                term="Retraining Jobs" 
+                explanation="A log of recent model retraining operations. Each job represents a batch of models being retrained with updated market data. The status shows whether training completed successfully, is still running, or encountered errors. This helps you track when your models were last updated."
+              />
+            </CardTitle>
             <CardDescription>Recent bulk retraining runs. Updated automatically every 30 seconds.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -692,8 +864,14 @@ export default function GeneralTab(): JSX.Element {
         <Card>
           <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
-              <CardTitle>API Endpoint Status</CardTitle>
-              <CardDescription>Live snapshot of key Phase 0 services queried directly from FastAPI.</CardDescription>
+              <CardTitle>
+                API Endpoint Status
+                <TooltipExplainer 
+                  term="API Endpoint Status" 
+                  explanation="Real-time health checks of the backend API services that power the trading system. Green (OK) means the service is responding correctly. Yellow (Check) means data is available but may need attention. Red (Error) indicates a service is down or failing. Use this to diagnose issues with data, reports, or trading functionality."
+                />
+              </CardTitle>
+              <CardDescription>Live snapshot of key backend services queried directly from FastAPI.</CardDescription>
             </div>
             <div className="flex items-center gap-3">
               {refreshIntervalMs > 0 ? (

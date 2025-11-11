@@ -1,4 +1,4 @@
-# MongoDB Collections — Phase 0
+# MongoDB Collections — Core Data
 
 ## `ohlcv`
 

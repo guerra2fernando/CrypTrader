@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { fetcher } from "@/lib/api";
 
 type StrategyRow = {
@@ -111,7 +112,13 @@ export default function ReportDetailPage(): JSX.Element {
           {data.top_strategies?.length ? (
             <Card>
               <CardHeader>
-                <CardTitle>Top Strategies</CardTitle>
+                <CardTitle>
+                  Top Strategies
+                  <TooltipExplainer 
+                    term="Top Strategies" 
+                    explanation="The best-performing trading strategies for this specific day, ranked by profit/loss. Shows which strategies made the most money and their key metrics like Sharpe ratio (risk-adjusted returns) and number of trades executed. This helps identify consistently strong performers worth allocating more capital to."
+                  />
+                </CardTitle>
                 <CardDescription>Ranked by reported profit and loss for the day.</CardDescription>
               </CardHeader>
               <CardContent className="overflow-x-auto">
@@ -146,7 +153,13 @@ export default function ReportDetailPage(): JSX.Element {
           {data.charts?.length ? (
             <Card>
               <CardHeader>
-                <CardTitle>Artifacts</CardTitle>
+                <CardTitle>
+                  Artifacts
+                  <TooltipExplainer 
+                    term="Report Artifacts" 
+                    explanation="Generated charts and visualizations created by the reporting pipeline for this day. These may include equity curves, performance heatmaps, correlation matrices, or other analytical visuals. Artifacts provide visual insights that complement the numerical data in the report, making patterns easier to spot."
+                  />
+                </CardTitle>
                 <CardDescription>Links to generated chart assets for this report.</CardDescription>
               </CardHeader>
               <CardContent>

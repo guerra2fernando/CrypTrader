@@ -12,6 +12,7 @@ import { EvolutionLeaderboardTable } from "@/components/EvolutionLeaderboardTabl
 import { EmptyState } from "@/components/EmptyState";
 import { ProgressIndicator } from "@/components/ProgressIndicator";
 import { RiskGaugeCard } from "@/components/RiskGaugeCard";
+import { TooltipExplainer } from "@/components/TooltipExplainer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -280,7 +281,13 @@ export default function IntradayCohortsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Intraday Cohorts</h1>
+          <h1 className="text-2xl font-semibold">
+            Intraday Cohorts
+            <TooltipExplainer 
+              term="Intraday Cohorts" 
+              explanation="Groups of trading strategies that run simultaneously on real intraday data (minutes/hours timeframes) to compete and prove themselves. Each cohort has a shared bankroll and runs for a set period (typically 3 days). The system tracks performance metrics and guard rails to identify which strategies are ready for live promotion. This is how new strategies graduate from testing to production."
+            />
+          </h1>
           <p className="text-sm text-muted-foreground">
             Track multi-agent intraday experiments, bankroll utilisation, and Day-3 promotion readiness.
           </p>
@@ -322,10 +329,18 @@ export default function IntradayCohortsPage() {
             limit={selectedCohort.bankroll ?? 1}
             description={`Using ${formatPercent(utilisationPct ?? 0)} of $${formatNumber(bankroll ?? 0, 2)} bankroll.`}
             tone={(utilisationPct ?? 0) > 0.9 ? "warning" : "ok"}
+            tooltip="How much of the cohort's allocated capital is currently being used for active trades. High utilization (>90%) means most capital is deployed, which limits the ability to take new opportunities. Low utilization may indicate strategies aren't finding enough good setups. Healthy utilization varies by strategy type."
           />
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Cohort PnL</CardTitle>
+              <CardTitle className="text-base">
+                Cohort PnL
+                <TooltipExplainer 
+                  term="Cohort PnL" 
+                  explanation="Profit and Loss for this entire group of strategies combined. Shows total ROI (return on investment), best and worst performing strategies, and overall profitability. Positive PnL means the cohort made money, negative means losses. The best/worst breakdown helps identify standout performers and underperformers within the group."
+                  size="sm"
+                />
+              </CardTitle>
               <CardDescription>Total ROI across agents in the selected cohort.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
@@ -341,18 +356,32 @@ export default function IntradayCohortsPage() {
               </div>
             </CardContent>
           </Card>
-          <ProgressIndicator
-            message="Guard Rail Progress"
-            variant="progress"
-            progress={guardRailProgress}
-            subMessage={
-              promotion
-                ? promotion.ready
-                  ? "All guard rails satisfied. Safe to proceed."
-                  : "Pending guard rails require operator review."
-                : "Awaiting cohort analytics."
-            }
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">
+                Guard Rail Progress
+                <TooltipExplainer 
+                  term="Guard Rail Progress" 
+                  explanation="Percentage of safety checks that have passed for Day-3 promotion readiness. Guard rails are safety criteria like minimum trade count, maximum slippage, and drawdown limits. 100% means all checks passed and the cohort is safe to promote. Less than 100% means some checks failed and manual review is needed before promotion."
+                  size="sm"
+                />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ProgressIndicator
+                message=""
+                variant="progress"
+                progress={guardRailProgress}
+                subMessage={
+                  promotion
+                    ? promotion.ready
+                      ? "All guard rails satisfied. Safe to proceed."
+                      : "Pending guard rails require operator review."
+                    : "Awaiting cohort analytics."
+                }
+              />
+            </CardContent>
+          </Card>
         </div>
       ) : null}
 
@@ -367,7 +396,14 @@ export default function IntradayCohortsPage() {
             <Card>
               <CardHeader className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <CardTitle className="text-base">Promotion Guard Rails</CardTitle>
+                  <CardTitle className="text-base">
+                    Promotion Guard Rails
+                    <TooltipExplainer 
+                      term="Promotion Guard Rails" 
+                      explanation="Safety checks that must pass before a strategy can be promoted to live trading. Each guard rail has a current observed value and a threshold it must meet. For example, 'Min Trade Count' might require at least 6 trades, or 'Max Slippage' might require less than 1% slippage. Passing all guard rails means the strategy demonstrated consistent, safe performance during testing."
+                      size="sm"
+                    />
+                  </CardTitle>
                   <CardDescription>
                     Recommended allocation {promotionAllocation} · {leverageBreachesCount} leverage alerts
                   </CardDescription>
