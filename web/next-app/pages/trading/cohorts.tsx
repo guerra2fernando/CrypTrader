@@ -72,7 +72,9 @@ function describeGuardRail(check: PromotionGuardRailCheck): { current: string; t
   };
 }
 
-function isDetailedAgentList(agentList: unknown): agentList is IntradayCohort["agents"] {
+function isDetailedAgentList(
+  agentList: IntradayCohort["agents"] | CohortListItem["agents"] | null | undefined,
+): agentList is IntradayCohort["agents"] {
   if (!Array.isArray(agentList)) {
     return false;
   }
@@ -185,7 +187,8 @@ export default function IntradayCohortsPage() {
     }
 
     if (isDetailedAgentList(rawAgents)) {
-      return rawAgents.map((agent) => {
+      const detailedAgents: IntradayCohort["agents"] = rawAgents;
+      return detailedAgents.map((agent: IntradayCohort["agents"][number]) => {
         const metrics = agent.metrics ?? {};
         const tags = [
           ...(agent.alerts?.length ? ["alert"] : []),
@@ -216,18 +219,17 @@ export default function IntradayCohortsPage() {
     }));
   }, [rawAgents]);
 
-  const selectedAgent = useMemo(() => {
-    if (!detail?.cohort?.agents?.length) {
+  const selectedAgent = useMemo<IntradayCohort["agents"][number] | null>(() => {
+    const agents = detail?.cohort?.agents;
+    if (!isDetailedAgentList(agents) || !agents.length) {
       return null;
     }
     if (!selectedStrategyId) {
-      return detail.cohort.agents[0] ?? null;
+      return (agents[0] ?? null) as IntradayCohort["agents"][number] | null;
     }
     return (
-      detail.cohort.agents.find((agent) => agent.strategy_id === selectedStrategyId) ??
-      detail.cohort.agents[0] ??
-      null
-    );
+      agents.find((agent) => agent.strategy_id === selectedStrategyId) ?? agents[0] ?? null
+    ) as IntradayCohort["agents"][number] | null;
   }, [detail?.cohort?.agents, selectedStrategyId]);
 
   const guardRailProgress = useMemo(() => {

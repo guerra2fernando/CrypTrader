@@ -1,3 +1,5 @@
+import { type ComponentProps } from "react";
+
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -26,7 +28,9 @@ type ExperimentCardProps = {
   active?: boolean;
 };
 
-const STATUS_COLORS: Record<string, string> = {
+type BadgeVariant = ComponentProps<typeof Badge>["variant"];
+
+const STATUS_COLORS: Record<string, BadgeVariant> = {
   pending: "outline",
   running: "default",
   completed: "secondary",

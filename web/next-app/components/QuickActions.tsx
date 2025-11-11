@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,7 +75,7 @@ export function QuickActions({
             min={50}
             step={50}
             value={bankroll}
-            onChange={(event) => setBankroll(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setBankroll(event.target.value)}
             className="h-9 w-32 text-xs"
             placeholder="Bankroll"
           />

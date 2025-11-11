@@ -1,6 +1,4 @@
-/* eslint-disable */
-// @ts-nocheck
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
 type Toast = {
   id: string;
@@ -10,7 +8,7 @@ type Toast = {
   timeout?: number;
 };
 
-type ToastContextValue = {
+export type ToastContextValue = {
   toasts: Toast[];
   pushToast: (toast: Omit<Toast, "id">) => void;
   dismissToast: (id: string) => void;
@@ -19,7 +17,11 @@ type ToastContextValue = {
 
 const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 
-export function ToastProvider({ children }) {
+type ToastProviderProps = {
+  children: ReactNode;
+};
+
+export function ToastProvider({ children }: ToastProviderProps) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const dismissToast = useCallback((id: string) => {
@@ -82,8 +84,8 @@ export function ToastProvider({ children }) {
   );
 }
 
-export function useToast() {
-  const ctx = useContext(ToastContext);
+export function useToast(): ToastContextValue {
+  const ctx = useContext<ToastContextValue | undefined>(ToastContext);
   if (!ctx) {
     throw new Error("useToast must be used within ToastProvider");
   }

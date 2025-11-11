@@ -1,4 +1,4 @@
-import { ChangeEvent } from "react";
+import React from "react";
 
 import { Input } from "@/components/ui/input";
 
@@ -9,7 +9,7 @@ type KnowledgeSearchInputProps = {
 };
 
 export function KnowledgeSearchInput({ value, onChange, placeholder = "Search knowledge base…" }: KnowledgeSearchInputProps) {
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     onChange(event.target.value);
   };
   return <Input value={value} onChange={handleChange} placeholder={placeholder} aria-label="Search knowledge base" />;

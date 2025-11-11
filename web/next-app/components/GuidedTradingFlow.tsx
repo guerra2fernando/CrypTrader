@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { ArrowRight, CheckCircle2, TrendingUp, TrendingDown, Eye } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -15,12 +15,26 @@ type GuidedTradingFlowProps = {
   onSubmitOrder?: (order: { symbol: string; side: "buy" | "sell"; size: number }) => Promise<void>;
 };
 
+type OrderData = {
+  symbol: string;
+  side: "buy" | "sell";
+  size: string;
+};
+
 export function GuidedTradingFlow({ onActionSelect, onSubmitOrder }: GuidedTradingFlowProps) {
   const { isEasyMode } = useMode();
   const [selectedAction, setSelectedAction] = useState<TradingAction | null>(null);
   const [step, setStep] = useState<number>(1);
-  const [orderData, setOrderData] = useState({ symbol: "", side: "buy" as "buy" | "sell", size: "" });
+  const [orderData, setOrderData] = useState<OrderData>({ symbol: "", side: "buy", size: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const handleSymbolChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setOrderData({ ...orderData, symbol: event.target.value.toUpperCase() });
+  };
+
+  const handleSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setOrderData({ ...orderData, size: event.target.value });
+  };
+
 
   // Only show in Easy Mode
   if (!isEasyMode) {
@@ -165,7 +179,7 @@ export function GuidedTradingFlow({ onActionSelect, onSubmitOrder }: GuidedTradi
                   id="symbol"
                   placeholder="e.g., BTC/USDT, ETH/USDT"
                   value={orderData.symbol}
-                  onChange={(e) => setOrderData({ ...orderData, symbol: e.target.value.toUpperCase() })}
+                  onChange={handleSymbolChange}
                 />
                 <p className="text-xs text-muted-foreground">
                   Enter the trading pair (e.g., BTC/USDT means Bitcoin priced in USDT)
@@ -178,7 +192,7 @@ export function GuidedTradingFlow({ onActionSelect, onSubmitOrder }: GuidedTradi
                   type="number"
                   placeholder="e.g., 100"
                   value={orderData.size}
-                  onChange={(e) => setOrderData({ ...orderData, size: e.target.value })}
+                  onChange={handleSizeChange}
                 />
                 <p className="text-xs text-muted-foreground">
                   Enter the dollar amount you want to {selectedAction === "buy" ? "spend" : "sell"}

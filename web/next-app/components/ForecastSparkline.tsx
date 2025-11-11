@@ -1,4 +1,4 @@
-import { memo } from "react";
+import React from "react";
 
 type Props = {
   values: number[];
@@ -18,11 +18,11 @@ function normalize(values: number[]): number[] {
   return values.map((value) => (value - min) / (max - min));
 }
 
-export const ForecastSparkline = memo(function ForecastSparkline({
+const ForecastSparklineComponent: React.FC<Props> = ({
   values,
   height = 36,
   width = 120,
-}: Props) {
+}) => {
   if (!values.length) {
     return <div className="text-xs text-muted-foreground">—</div>;
   }
@@ -62,5 +62,9 @@ export const ForecastSparkline = memo(function ForecastSparkline({
       </span>
     </div>
   );
-});
+};
+
+ForecastSparklineComponent.displayName = "ForecastSparkline";
+
+export const ForecastSparkline = React.memo(ForecastSparklineComponent);
 

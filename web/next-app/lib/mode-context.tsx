@@ -12,30 +12,29 @@ interface ModeContextType {
   isAdvancedMode: boolean;
 }
 
-const ModeContext = createContext<ModeContextType | undefined>(undefined);
+const ModeContext = createContext<ModeContextType>({
+  mode: DEFAULT_MODE,
+  setMode: () => {
+    throw new Error("setMode must be used within a ModeProvider");
+  },
+  isEasyMode: true,
+  isAdvancedMode: false,
+});
 
 export function ModeProvider({ children }: { children: ReactNode }): JSX.Element {
   const [mode, setModeState] = useState<UserMode>(DEFAULT_MODE);
-  const [mounted, setMounted] = useState(false);
-
   useEffect(() => {
     // Load mode from localStorage on mount
     const stored = localStorage.getItem(MODE_STORAGE_KEY);
     if (stored === "easy" || stored === "advanced") {
       setModeState(stored);
     }
-    setMounted(true);
   }, []);
 
   const setMode = (newMode: UserMode) => {
     setModeState(newMode);
     localStorage.setItem(MODE_STORAGE_KEY, newMode);
   };
-
-  // Prevent hydration mismatch by not rendering until mounted
-  if (!mounted) {
-    return <>{children}</>;
-  }
 
   return (
     <ModeContext.Provider
@@ -52,10 +51,6 @@ export function ModeProvider({ children }: { children: ReactNode }): JSX.Element
 }
 
 export function useMode(): ModeContextType {
-  const context = useContext(ModeContext);
-  if (context === undefined) {
-    throw new Error("useMode must be used within a ModeProvider");
-  }
-  return context;
+  return useContext(ModeContext);
 }
 

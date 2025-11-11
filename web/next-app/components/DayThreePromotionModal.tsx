@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import type { CheckedState } from "@radix-ui/react-checkbox";
 import useSWR from "swr";
 
 import { Badge } from "@/components/ui/badge";
@@ -85,6 +86,16 @@ export function DayThreePromotionModal({
   const [acknowledge, setAcknowledge] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
 
+  const handleInputChange =
+    (setter: (value: string) => void) =>
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setter(event.target.value);
+    };
+
+  const handleTextareaChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setApprovalNotes(event.target.value);
+  };
+
   useEffect(() => {
     if (!open || !promotion) {
       return;
@@ -159,8 +170,8 @@ export function DayThreePromotionModal({
   return (
     <Dialog
       open={open}
-      onOpenChange={(next) => {
-        if (!next) {
+      onOpenChange={(nextOpen: boolean) => {
+        if (!nextOpen) {
           onClose();
         }
       }}
@@ -331,7 +342,7 @@ export function DayThreePromotionModal({
                   max={100}
                   step={0.5}
                   value={slicePct}
-                  onChange={(event) => setSlicePct(event.target.value)}
+                  onChange={handleInputChange(setSlicePct)}
                 />
               </div>
               <div className="space-y-2">
@@ -342,7 +353,7 @@ export function DayThreePromotionModal({
                   min={10}
                   step={10}
                   value={minAllocationUsd}
-                  onChange={(event) => setMinAllocationUsd(event.target.value)}
+                  onChange={handleInputChange(setMinAllocationUsd)}
                 />
               </div>
               <div className="space-y-2">
@@ -353,7 +364,7 @@ export function DayThreePromotionModal({
                   min={1}
                   step={1}
                   value={minTradeCount}
-                  onChange={(event) => setMinTradeCount(event.target.value)}
+                  onChange={handleInputChange(setMinTradeCount)}
                 />
               </div>
               <div className="space-y-2">
@@ -364,7 +375,7 @@ export function DayThreePromotionModal({
                   min={0.1}
                   step={0.1}
                   value={maxSlippagePct}
-                  onChange={(event) => setMaxSlippagePct(event.target.value)}
+                  onChange={handleInputChange(setMaxSlippagePct)}
                 />
               </div>
               <div className="space-y-2">
@@ -375,7 +386,7 @@ export function DayThreePromotionModal({
                   min={1}
                   step={0.5}
                   value={maxParentDrawdownPct}
-                  onChange={(event) => setMaxParentDrawdownPct(event.target.value)}
+                  onChange={handleInputChange(setMaxParentDrawdownPct)}
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
@@ -384,7 +395,7 @@ export function DayThreePromotionModal({
                   id="promotion-notes"
                   placeholder="Document any overrides or compliance considerations before enabling promotion."
                   value={approvalNotes}
-                  onChange={(event) => setApprovalNotes(event.target.value)}
+                  onChange={handleTextareaChange}
                   rows={3}
                 />
               </div>
@@ -400,7 +411,7 @@ export function DayThreePromotionModal({
           <Checkbox
             id="promotion-acknowledge"
             checked={acknowledge}
-            onCheckedChange={(checked) => setAcknowledge(Boolean(checked))}
+            onCheckedChange={(nextChecked: CheckedState) => setAcknowledge(nextChecked === true)}
           />
           <label htmlFor="promotion-acknowledge" className="cursor-pointer select-none">
             I acknowledge the guard rails and accept responsibility for the Day-3 promotion decision.

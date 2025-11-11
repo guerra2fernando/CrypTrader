@@ -78,6 +78,22 @@ export default function Home(): JSX.Element {
   const availableSymbols = overview?.available_symbols ?? [];
   const inventory = overview?.inventory ?? [];
   const reportItems: Report[] = reports?.reports ?? [];
+  const uniqueSymbolsCount = useMemo(() => {
+    const set = new Set<string>();
+    inventory.forEach((row) => set.add(row.symbol));
+    return set.size;
+  }, [inventory]);
+  const latestCandleTimestamp = useMemo(() => {
+    return inventory.reduce((latest, row) => {
+      if (!row.latest_candle) {
+        return latest;
+      }
+      const timestamp = new Date(row.latest_candle).getTime();
+      return Number.isNaN(timestamp) ? latest : Math.max(latest, timestamp);
+    }, 0);
+  }, [inventory]);
+  const latestCandleDisplay = latestCandleTimestamp ? new Date(latestCandleTimestamp).toLocaleString() : null;
+  const latestReport = reportItems[0] ?? null;
 
   useEffect(() => {
     if (!symbolsInitialized && overview?.default_symbols?.length) {
@@ -183,6 +199,13 @@ export default function Home(): JSX.Element {
 
     return (
       <div className="space-y-8">
+        <div>
+          <h1 className="text-4xl font-bold text-foreground md:text-5xl">Lenxys Trader</h1>
+          <p className="mt-2 text-lg text-muted-foreground md:text-xl">
+            Your command center for running AI-assisted crypto strategies with guided workflows.
+          </p>
+        </div>
+
         {/* Welcome Section */}
         {!hasData && (
           <Card className="border-primary/20 bg-primary/5">
@@ -209,8 +232,8 @@ export default function Home(): JSX.Element {
         {/* Quick Actions */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Link href="/trading">
-            <Card className="cursor-pointer transition-all hover:border-primary/50 hover:shadow-md">
-              <CardHeader className="pb-3">
+            <Card className="flex h-full cursor-pointer flex-col transition-all hover:border-primary/50 hover:shadow-md">
+              <CardHeader className="flex flex-col gap-2 pb-3">
                 <div className="flex items-center gap-2">
                   <div className="rounded-lg bg-primary/10 p-2">
                     <TrendingUp className="h-5 w-5 text-primary" />
@@ -218,14 +241,14 @@ export default function Home(): JSX.Element {
                   <CardTitle className="text-base">Trading</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="mt-auto text-sm text-muted-foreground">
                 <p className="text-sm text-muted-foreground">Place orders and manage your positions</p>
               </CardContent>
             </Card>
           </Link>
           <Link href="/insights">
-            <Card className="cursor-pointer transition-all hover:border-primary/50 hover:shadow-md">
-              <CardHeader className="pb-3">
+            <Card className="flex h-full cursor-pointer flex-col transition-all hover:border-primary/50 hover:shadow-md">
+              <CardHeader className="flex flex-col gap-2 pb-3">
                 <div className="flex items-center gap-2">
                   <div className="rounded-lg bg-primary/10 p-2">
                     <BarChart3 className="h-5 w-5 text-primary" />
@@ -233,14 +256,14 @@ export default function Home(): JSX.Element {
                   <CardTitle className="text-base">Insights</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="mt-auto text-sm text-muted-foreground">
                 <p className="text-sm text-muted-foreground">View forecasts and strategy recommendations</p>
               </CardContent>
             </Card>
           </Link>
           <Link href="/assistant">
-            <Card className="cursor-pointer transition-all hover:border-primary/50 hover:shadow-md">
-              <CardHeader className="pb-3">
+            <Card className="flex h-full cursor-pointer flex-col transition-all hover:border-primary/50 hover:shadow-md">
+              <CardHeader className="flex flex-col gap-2 pb-3">
                 <div className="flex items-center gap-2">
                   <div className="rounded-lg bg-primary/10 p-2">
                     <MessageSquare className="h-5 w-5 text-primary" />
@@ -248,14 +271,14 @@ export default function Home(): JSX.Element {
                   <CardTitle className="text-base">Assistant</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="mt-auto text-sm text-muted-foreground">
                 <p className="text-sm text-muted-foreground">Ask questions and get trading advice</p>
               </CardContent>
             </Card>
           </Link>
           <Link href="/settings">
-            <Card className="cursor-pointer transition-all hover:border-primary/50 hover:shadow-md">
-              <CardHeader className="pb-3">
+            <Card className="flex h-full cursor-pointer flex-col transition-all hover:border-primary/50 hover:shadow-md">
+              <CardHeader className="flex flex-col gap-2 pb-3">
                 <div className="flex items-center gap-2">
                   <div className="rounded-lg bg-primary/10 p-2">
                     <Settings className="h-5 w-5 text-primary" />
@@ -263,7 +286,7 @@ export default function Home(): JSX.Element {
                   <CardTitle className="text-base">Settings</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="mt-auto text-sm text-muted-foreground">
                 <p className="text-sm text-muted-foreground">Configure your trading preferences</p>
               </CardContent>
             </Card>
@@ -276,25 +299,45 @@ export default function Home(): JSX.Element {
             <CardTitle>System Status</CardTitle>
             <CardDescription>Current platform health and data status</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 p-4">
               <div>
-                <p className="text-sm font-medium">Platform Status</p>
+                <p className="text-sm font-medium text-foreground">Platform Status</p>
                 <p className="text-xs text-muted-foreground">Overall system health</p>
               </div>
               <Badge variant={status?.status === "ok" ? "default" : "destructive"}>
                 {status ? (status.status === "ok" ? "Healthy" : status.status) : "Loading"}
               </Badge>
             </div>
-            {hasData && (
-              <div className="mt-4 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">Data Coverage</p>
-                  <p className="text-xs text-muted-foreground">Available market data</p>
-                </div>
-                <Badge variant="secondary">{inventory.length} pairs configured</Badge>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+                <p className="text-xs font-medium text-muted-foreground">Tracked Pairs</p>
+                <p className="text-lg font-semibold text-foreground">{uniqueSymbolsCount}</p>
+                <p className="text-xs text-muted-foreground">{inventory.length} datasets ingested</p>
               </div>
-            )}
+              <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+                <p className="text-xs font-medium text-muted-foreground">Latest Market Data</p>
+                <p className="text-lg font-semibold text-foreground">
+                  {latestCandleDisplay ?? "Awaiting sync"}
+                </p>
+                <p className="text-xs text-muted-foreground">Most recent candle timestamp</p>
+              </div>
+              <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+                <p className="text-xs font-medium text-muted-foreground">Latest Report</p>
+                <p className="text-lg font-semibold text-foreground">
+                  {latestReport?.date ?? "No reports yet"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {latestReport?.summary ? latestReport.summary : "Generate a report to see insights"}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+                <p className="text-xs font-medium text-muted-foreground">Default Symbols</p>
+                <p className="text-lg font-semibold text-foreground">{overview?.default_symbols?.length ?? 0}</p>
+                <p className="text-xs text-muted-foreground">Configured for guided workflows</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -345,13 +388,21 @@ export default function Home(): JSX.Element {
   // Advanced Mode Dashboard (Original Technical View)
   return (
     <div className="space-y-8">
+      <div>
+        <h1 className="text-4xl font-bold text-foreground md:text-5xl">Lenxys Trader Control Center</h1>
+        <p className="mt-2 text-lg text-muted-foreground md:text-xl">
+          Monitor data pipelines, bootstrap market history, and inspect system artifacts.
+        </p>
+      </div>
+
       <section className="grid gap-6 xl:grid-cols-[2fr,3fr]">
         <Card>
           <CardHeader className="flex flex-row items-start justify-between">
             <div>
-              <CardTitle>Phase 0 Bootstrap</CardTitle>
+              <CardTitle>Data Bootstrap Controls</CardTitle>
               <CardDescription>
                 Fetch minute-level history, build features, run the baseline sim, and generate a fresh report.
+                Detailed configuration is also available under Settings &gt; Experiments.
               </CardDescription>
             </div>
             <Badge variant={status?.status === "ok" ? "success" : "warning"}>
@@ -440,6 +491,9 @@ export default function Home(): JSX.Element {
             <div className="flex items-center gap-3">
               <Button onClick={handleBootstrap} disabled={!canBootstrap}>
                 {loading ? "Bootstrapping..." : "Run Bootstrap"}
+              </Button>
+              <Button asChild variant="outline" size="sm">
+                <Link href="/settings?tab=experiments">Open Settings</Link>
               </Button>
               {error ? <span className="text-sm text-destructive">{error}</span> : null}
             </div>
