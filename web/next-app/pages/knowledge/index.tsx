@@ -2,9 +2,12 @@ import { useMemo, useState } from "react";
 import useSWR from "swr";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/EmptyState";
+import { ErrorMessage } from "@/components/ErrorMessage";
 import { InsightCard } from "@/components/InsightCard";
 import { KnowledgeSearchInput } from "@/components/KnowledgeSearchInput";
 import { KnowledgeTimeline } from "@/components/KnowledgeTimeline";
+import { useMode } from "@/lib/mode-context";
 import { fetcher } from "@/lib/api";
 
 type KnowledgeEntry = {
@@ -26,10 +29,11 @@ type SearchResponse = {
 };
 
 export default function KnowledgePage() {
-  const { data } = useSWR<KnowledgeResponse>("/api/knowledge/?limit=20", fetcher, { refreshInterval: 60000 });
+  const { isEasyMode } = useMode();
+  const { data, error } = useSWR<KnowledgeResponse>("/api/knowledge/?limit=20", fetcher, { refreshInterval: 60000 });
   const [query, setQuery] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
-  const { data: searchData } = useSWR<SearchResponse>(
+  const { data: searchData, error: searchError } = useSWR<SearchResponse>(
     query.trim().length > 1 ? `/api/knowledge/search?q=${encodeURIComponent(query.trim())}&limit=10` : null,
     fetcher,
   );
@@ -56,7 +60,13 @@ export default function KnowledgePage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <KnowledgeSearchInput value={query} onChange={setQuery} />
-          {query.trim() && searchResults.length ? (
+          {searchError ? (
+            <ErrorMessage
+              title="Search failed"
+              message={searchError instanceof Error ? searchError.message : "Unknown error"}
+              error={searchError}
+            />
+          ) : query.trim() && searchResults.length ? (
             <div className="space-y-2 rounded-md border border-dashed border-border/50 p-3 text-xs text-muted-foreground">
               <p className="font-medium text-foreground">Matches</p>
               <ul className="space-y-1">
@@ -77,14 +87,38 @@ export default function KnowledgePage() {
                 ))}
               </ul>
             </div>
+          ) : query.trim() && searchResults.length === 0 ? (
+            <EmptyState
+              variant="search"
+              title="No Results Found"
+              description={isEasyMode ? "Try different search terms or browse the timeline below to find insights." : "No knowledge entries match your search query. Try different keywords."}
+            />
           ) : null}
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-[1.2fr,1fr]">
-        <KnowledgeTimeline entries={entries} onSelect={(entry) => setSelectedPeriod(entry.period)} />
+      {error ? (
+        <ErrorMessage
+          title="Failed to load knowledge"
+          message={error instanceof Error ? error.message : "Unknown error"}
+          error={error}
+          onRetry={() => window.location.reload()}
+        />
+      ) : entries.length === 0 ? (
+        <EmptyState
+          variant="data"
+          title={isEasyMode ? "No Insights Yet" : "No Knowledge Entries"}
+          description={
+            isEasyMode
+              ? "Historical insights will appear here once the system has analyzed trading data. Check back after some trading activity."
+              : "No knowledge entries available. The system generates insights from trading history and performance data."
+          }
+        />
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-[1.2fr,1fr]">
+          <KnowledgeTimeline entries={entries} onSelect={(entry) => setSelectedPeriod(entry.period)} />
 
-        {selectedEntry ? (
+          {selectedEntry ? (
           <div className="space-y-4">
             <InsightCard title="Summary" summary={selectedEntry.summary} />
             <InsightCard title="Winners" bullets={selectedEntry.winners_summary} />
@@ -107,16 +141,14 @@ export default function KnowledgePage() {
             <InsightCard title="Actionables" bullets={selectedEntry.actionables} />
           </div>
         ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Insight Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">Select a period to view generated insights.</p>
-            </CardContent>
-          </Card>
+          <EmptyState
+            variant="default"
+            title="Select a Period"
+            description={isEasyMode ? "Click on a period in the timeline to view insights and learnings from that time." : "Select a period from the timeline to view generated insights."}
+          />
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

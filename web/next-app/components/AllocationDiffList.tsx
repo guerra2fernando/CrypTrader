@@ -1,3 +1,6 @@
+import { EmptyState } from "@/components/EmptyState";
+import { useMode } from "@/lib/mode-context";
+
 type AllocationDetails = {
   strategy_id: string;
   weight: number;
@@ -17,8 +20,20 @@ function toMap(values?: AllocationDetails[]) {
 }
 
 export function AllocationDiffList({ current, previous }: Props) {
+  const { isEasyMode } = useMode();
+
   if (!current || current.length === 0) {
-    return <p className="text-sm text-muted-foreground">Allocator has not produced weights yet.</p>;
+    return (
+      <EmptyState
+        variant="data"
+        title={isEasyMode ? "No Allocation Yet" : "No Allocation"}
+        description={
+          isEasyMode
+            ? "Portfolio allocation will appear here once the system has determined how to distribute your capital across different strategies."
+            : "Allocator has not produced weights yet."
+        }
+      />
+    );
   }
 
   const currentMap = toMap(current);

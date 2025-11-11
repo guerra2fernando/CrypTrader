@@ -5,33 +5,41 @@ import { useRouter } from "next/router";
 import type { ReactNode } from "react";
 
 import { NotificationCenter } from "@/components/NotificationCenter";
+import { ModeToggle } from "@/components/ModeToggle";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useMode } from "@/lib/mode-context";
 import { cn } from "@/lib/utils";
 
 type Props = {
   children: ReactNode;
 };
 
-const NAV_ITEMS = [
-  { href: "/", label: "Overview" },
-  { href: "/assistant", label: "Assistant" },
-  { href: "/forecasts", label: "Forecasts" },
+const EASY_MODE_NAV_ITEMS = [
+  { href: "/", label: "Dashboard" },
+  { href: "/get-started", label: "Get Started" },
   { href: "/trading", label: "Trading" },
-  { href: "/risk", label: "Risk" },
-  { href: "/models/registry", label: "Model Registry" },
-  { href: "/strategies", label: "Strategies" },
-  { href: "/evolution", label: "Evolution" },
+  { href: "/insights", label: "Insights" },
+  { href: "/assistant", label: "Assistant" },
+  { href: "/settings", label: "Settings" },
+] as const;
+
+const ADVANCED_MODE_NAV_ITEMS = [
+  { href: "/", label: "Dashboard" },
+  { href: "/trading", label: "Trading" },
+  { href: "/analytics", label: "Analytics" },
+  { href: "/assistant", label: "Assistant" },
   { href: "/knowledge", label: "Knowledge" },
-  { href: "/insights", label: "Learning Insights" },
-  { href: "/reports", label: "Reports" },
   { href: "/settings", label: "Settings" },
 ] as const;
 
 export function Layout({ children }: Props) {
   const router = useRouter();
   const pathname = router.pathname;
+  const { isEasyMode } = useMode();
 
-  const isActive = (href: (typeof NAV_ITEMS)[number]["href"]) => {
+  const navItems = isEasyMode ? EASY_MODE_NAV_ITEMS : ADVANCED_MODE_NAV_ITEMS;
+
+  const isActive = (href: (typeof navItems)[number]["href"]) => {
     if (href === "/") {
       return pathname === "/";
     }
@@ -47,7 +55,7 @@ export function Layout({ children }: Props) {
               Lenxys Trader
             </Link>
             <nav className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              {NAV_ITEMS.map((item) => (
+              {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
@@ -62,6 +70,7 @@ export function Layout({ children }: Props) {
             </nav>
           </div>
           <div className="flex items-center gap-3">
+            <ModeToggle />
             <NotificationCenter />
             <ThemeToggle />
           </div>

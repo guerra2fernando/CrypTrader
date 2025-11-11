@@ -3,7 +3,9 @@
 
 import { useMemo, useState } from "react";
 
+import { EmptyState } from "@/components/EmptyState";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMode } from "@/lib/mode-context";
 import { FeatureImportanceHeatmap } from "@/components/FeatureImportanceHeatmap";
 import { AllocationDiffList } from "@/components/AllocationDiffList";
 import { AllocatorAllocationChart } from "@/components/AllocatorAllocationChart";
@@ -63,15 +65,16 @@ type Props = {
 };
 
 const TABS = [
-  { id: "meta", label: "Meta-Model" },
-  { id: "allocator", label: "Allocator" },
-  { id: "overfit", label: "Overfitting" },
-  { id: "knowledge", label: "Knowledge" },
+  { id: "meta", label: "Meta-Model", easyLabel: "Strategy Selector" },
+  { id: "allocator", label: "Allocator", easyLabel: "Portfolio Allocation" },
+  { id: "overfit", label: "Overfitting", easyLabel: "Overfitting" },
+  { id: "knowledge", label: "Knowledge", easyLabel: "Knowledge" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
 
 export function InsightsTabs({ meta, allocator, overfit, knowledge, onAckOverfit, acknowledgingId, isLoading }: Props) {
+  const { isEasyMode } = useMode();
   const [tab, setTab] = useState<TabId>("meta");
 
   const metaMetrics = useMemo(() => {
@@ -94,7 +97,7 @@ export function InsightsTabs({ meta, allocator, overfit, knowledge, onAckOverfit
             onClick={() => setTab(item.id)}
             size="sm"
           >
-            {item.label}
+            {isEasyMode ? item.easyLabel : item.label}
           </Button>
         ))}
       </div>
@@ -120,7 +123,11 @@ export function InsightsTabs({ meta, allocator, overfit, knowledge, onAckOverfit
                   </div>
                 ))}
                 {metaMetrics.length === 0 && (
-                  <p className="text-sm text-muted-foreground">No evaluation metrics captured yet.</p>
+                  <EmptyState
+                    variant="data"
+                    title=""
+                    description={isEasyMode ? "No evaluation metrics captured yet. Run a learning cycle to generate metrics." : "No evaluation metrics captured yet."}
+                  />
                 )}
               </div>
               <SendToAssistantButton prompt="Summarise the latest meta-model feature drivers">
@@ -153,8 +160,12 @@ export function InsightsTabs({ meta, allocator, overfit, knowledge, onAckOverfit
           />
           <Card>
             <CardHeader>
-              <CardTitle>Current Allocation</CardTitle>
-              <CardDescription>Weights determined by the learning allocator.</CardDescription>
+              <CardTitle>{isEasyMode ? "Current Portfolio Allocation" : "Current Allocation"}</CardTitle>
+              <CardDescription>
+                {isEasyMode
+                  ? "How your trading capital is divided between different strategies."
+                  : "Weights determined by the learning allocator."}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <AllocatorAllocationChart allocations={allocator?.weights} isLoading={isLoading?.allocator} />

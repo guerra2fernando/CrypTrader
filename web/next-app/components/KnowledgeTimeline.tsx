@@ -1,4 +1,6 @@
+import { EmptyState } from "@/components/EmptyState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMode } from "@/lib/mode-context";
 
 type KnowledgeEntry = {
   period: string;
@@ -15,13 +17,25 @@ type KnowledgeTimelineProps = {
 };
 
 export function KnowledgeTimeline({ entries, onSelect }: KnowledgeTimelineProps) {
+  const { isEasyMode } = useMode();
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Knowledge Timeline</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {entries.length === 0 ? <p className="text-sm text-muted-foreground">No knowledge recorded yet.</p> : null}
+        {entries.length === 0 ? (
+          <EmptyState
+            variant="data"
+            title={isEasyMode ? "No Insights Yet" : "No Knowledge Recorded"}
+            description={
+              isEasyMode
+                ? "Historical insights and learnings will appear here once the system has analyzed trading data. Check back after some trading activity."
+                : "No knowledge recorded yet."
+            }
+          />
+        ) : null}
         {entries.map((entry) => (
           <button
             key={entry.period}

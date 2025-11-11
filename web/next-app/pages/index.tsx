@@ -1,7 +1,9 @@
 /* eslint-disable */
 // @ts-nocheck
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import useSWR from "swr";
+import { ArrowRight, TrendingUp, MessageSquare, BarChart3, Settings, Sparkles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { useMode } from "@/lib/mode-context";
 import { fetcher } from "../lib/api";
 
 type StatusResponse = {
@@ -171,7 +174,175 @@ export default function Home(): JSX.Element {
   };
 
   const canBootstrap = selectedSymbols.length > 0 && selectedIntervals.length > 0 && !loading;
+  const { isEasyMode } = useMode();
 
+  // Easy Mode Dashboard
+  if (isEasyMode) {
+    const hasData = inventory.length > 0;
+    const hasReports = reportItems.length > 0;
+
+    return (
+      <div className="space-y-8">
+        {/* Welcome Section */}
+        {!hasData && (
+          <Card className="border-primary/20 bg-primary/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Welcome to Lenxys Trader
+              </CardTitle>
+              <CardDescription>
+                Get started by setting up your trading platform. We'll guide you through everything step by step.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/get-started">
+                <Button size="lg" className="w-full sm:w-auto">
+                  Get Started
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Quick Actions */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Link href="/trading">
+            <Card className="cursor-pointer transition-all hover:border-primary/50 hover:shadow-md">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="rounded-lg bg-primary/10 p-2">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                  </div>
+                  <CardTitle className="text-base">Trading</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">Place orders and manage your positions</p>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/insights">
+            <Card className="cursor-pointer transition-all hover:border-primary/50 hover:shadow-md">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="rounded-lg bg-primary/10 p-2">
+                    <BarChart3 className="h-5 w-5 text-primary" />
+                  </div>
+                  <CardTitle className="text-base">Insights</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">View forecasts and strategy recommendations</p>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/assistant">
+            <Card className="cursor-pointer transition-all hover:border-primary/50 hover:shadow-md">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="rounded-lg bg-primary/10 p-2">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                  </div>
+                  <CardTitle className="text-base">Assistant</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">Ask questions and get trading advice</p>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/settings">
+            <Card className="cursor-pointer transition-all hover:border-primary/50 hover:shadow-md">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="rounded-lg bg-primary/10 p-2">
+                    <Settings className="h-5 w-5 text-primary" />
+                  </div>
+                  <CardTitle className="text-base">Settings</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">Configure your trading preferences</p>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+
+        {/* System Status */}
+        <Card>
+          <CardHeader>
+            <CardTitle>System Status</CardTitle>
+            <CardDescription>Current platform health and data status</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">Platform Status</p>
+                <p className="text-xs text-muted-foreground">Overall system health</p>
+              </div>
+              <Badge variant={status?.status === "ok" ? "default" : "destructive"}>
+                {status ? (status.status === "ok" ? "Healthy" : status.status) : "Loading"}
+              </Badge>
+            </div>
+            {hasData && (
+              <div className="mt-4 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Data Coverage</p>
+                  <p className="text-xs text-muted-foreground">Available market data</p>
+                </div>
+                <Badge variant="secondary">{inventory.length} pairs configured</Badge>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Recent Activity */}
+        {hasReports && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Reports</CardTitle>
+              <CardDescription>Latest performance summaries</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {reportItems.slice(0, 3).map((report: Report) => (
+                  <div key={report.date} className="rounded-lg border bg-muted/30 p-3">
+                    <div className="text-sm font-semibold text-foreground">{report.date}</div>
+                    <div className="mt-1 text-sm text-muted-foreground">{report.summary || "No summary available."}</div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Data Setup Prompt */}
+        {!hasData && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Initial Setup</CardTitle>
+              <CardDescription>Set up your trading data to get started</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Before you can start trading, we need to fetch historical market data. This helps the system make better predictions.
+              </p>
+              <Link href="/get-started">
+                <Button>
+                  Complete Setup
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  }
+
+  // Advanced Mode Dashboard (Original Technical View)
   return (
     <div className="space-y-8">
       <section className="grid gap-6 xl:grid-cols-[2fr,3fr]">
@@ -286,7 +457,7 @@ export default function Home(): JSX.Element {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Symbol</TableHead>
-                    <TableHead className="text-right">OHLCV Candles</TableHead>
+                    <TableHead className="text-right">{isEasyMode ? "Price Data Points" : "OHLCV Candles"}</TableHead>
                     <TableHead className="text-right">Feature Rows</TableHead>
                     <TableHead className="text-right">Latest Candle</TableHead>
                   </TableRow>
@@ -393,7 +564,7 @@ export default function Home(): JSX.Element {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Symbol</TableHead>
-                      <TableHead className="text-right">OHLCV Candles</TableHead>
+                      <TableHead className="text-right">{isEasyMode ? "Price Data Points" : "OHLCV Candles"}</TableHead>
                       <TableHead className="text-right">Feature Rows</TableHead>
                       <TableHead className="text-right">Latest Candle</TableHead>
                     </TableRow>

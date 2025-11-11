@@ -1,4 +1,6 @@
 import React from "react";
+import { EmptyState } from "@/components/EmptyState";
+import { ProgressIndicator } from "@/components/ProgressIndicator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -10,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useMode } from "@/lib/mode-context";
 import { cn } from "@/lib/utils";
 
 export type ModelRegistryRecord = {
@@ -38,39 +41,43 @@ type Props = {
 };
 
 export function ModelRegistryTable({ items, isLoading, onRetrain, onSelect, selectedModelId }: Props) {
+  const { isEasyMode } = useMode();
+
   return (
     <Card className="border">
       <CardContent className="-mx-4 -mb-4 px-0 pb-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Model ID</TableHead>
-              <TableHead>Symbol</TableHead>
-              <TableHead>Horizon</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Algorithm</TableHead>
-              <TableHead>RMSE</TableHead>
-              <TableHead>Dir. Acc.</TableHead>
-              <TableHead>Trained</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading && (
+        {isLoading ? (
+          <div className="py-12">
+            <ProgressIndicator message="Loading model registry..." variant="spinner" />
+          </div>
+        ) : items.length === 0 ? (
+          <div className="py-6">
+            <EmptyState
+              variant="data"
+              title={isEasyMode ? "No Models Yet" : "No Models Registered"}
+              description={
+                isEasyMode
+                  ? "Machine learning models will appear here once they've been trained. Models are created automatically when you run forecasts or training cycles."
+                  : "No models registered yet. Train a horizon to populate the registry."
+              }
+            />
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={9} className="py-6 text-sm text-muted-foreground">
-                  Loading registry…
-                </TableCell>
+                <TableHead>Model ID</TableHead>
+                <TableHead>Symbol</TableHead>
+                <TableHead>Horizon</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Algorithm</TableHead>
+                <TableHead>RMSE</TableHead>
+                <TableHead>Dir. Acc.</TableHead>
+                <TableHead>Trained</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            )}
-
-            {!isLoading && items.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={9} className="py-6 text-sm text-muted-foreground">
-                  No models registered yet. Train a horizon to populate the registry.
-                </TableCell>
-              </TableRow>
-            )}
+            </TableHeader>
+            <TableBody>
 
             {items.map((record) => {
               const rmse = record.metrics?.test?.rmse;
@@ -117,9 +124,10 @@ export function ModelRegistryTable({ items, isLoading, onRetrain, onSelect, sele
                 </TableRow>
               );
             })}
-          </TableBody>
-          <TableCaption>Model registry entries sorted by newest first.</TableCaption>
-        </Table>
+            </TableBody>
+            <TableCaption>Model registry entries sorted by newest first.</TableCaption>
+          </Table>
+        )}
       </CardContent>
     </Card>
   );

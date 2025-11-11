@@ -1,6 +1,8 @@
 /* eslint-disable */
 // @ts-nocheck
+import { EmptyState } from "@/components/EmptyState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMode } from "@/lib/mode-context";
 import { formatNumber } from "@/lib/utils";
 
 type Fill = {
@@ -18,6 +20,8 @@ type FillsFeedProps = {
 };
 
 export function FillsFeed({ fills }: FillsFeedProps) {
+  const { isEasyMode } = useMode();
+
   return (
     <Card>
       <CardHeader>
@@ -25,7 +29,15 @@ export function FillsFeed({ fills }: FillsFeedProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         {fills.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No fills recorded yet.</p>
+          <EmptyState
+            variant="trading"
+            title={isEasyMode ? "No Fills Yet" : "No Fills Recorded"}
+            description={
+              isEasyMode
+                ? "Order fills will appear here once your orders are executed. Fills show when buy or sell orders are completed."
+                : "No fills recorded yet."
+            }
+          />
         ) : (
           fills.map((fill) => {
             const timestamp = fill.executed_at ? new Date(fill.executed_at).toLocaleString() : "—";

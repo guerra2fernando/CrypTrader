@@ -1,7 +1,8 @@
 import { ConfidenceIndicator } from "@/components/ConfidenceIndicator";
+import { EmptyState } from "@/components/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { ForecastSparkline } from "@/components/ForecastSparkline";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -11,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useMode } from "@/lib/mode-context";
 import { cn } from "@/lib/utils";
 
 export type ForecastModelBreakdown = {
@@ -38,18 +40,49 @@ type Props = {
 };
 
 export function ForecastTable({ data, isLoading, lastUpdated, history }: Props) {
+  const { isEasyMode } = useMode();
+
+  // Generate plain language summary for Easy Mode
+  const getPlainLanguageSummary = (row: ForecastRow): string => {
+    const pred = row.pred_return ?? 0;
+    const confidence = row.confidence ?? 0;
+    const symbol = row.symbol;
+
+    if (pred > 0.05) {
+      return `The system predicts ${symbol} will go up by ${(pred * 100).toFixed(1)}% with ${(confidence * 100).toFixed(0)}% confidence. This is a strong positive signal.`;
+    } else if (pred > 0.02) {
+      return `The system predicts ${symbol} will go up by ${(pred * 100).toFixed(1)}% with ${(confidence * 100).toFixed(0)}% confidence. This is a moderate positive signal.`;
+    } else if (pred < -0.05) {
+      return `The system predicts ${symbol} will go down by ${(Math.abs(pred) * 100).toFixed(1)}% with ${(confidence * 100).toFixed(0)}% confidence. This is a strong negative signal.`;
+    } else if (pred < -0.02) {
+      return `The system predicts ${symbol} will go down by ${(Math.abs(pred) * 100).toFixed(1)}% with ${(confidence * 100).toFixed(0)}% confidence. This is a moderate negative signal.`;
+    } else {
+      return `The system predicts ${symbol} will have minimal movement (${(pred * 100).toFixed(1)}%) with ${(confidence * 100).toFixed(0)}% confidence.`;
+    }
+  };
+
   return (
     <Card className="border">
-      <CardContent className="-mx-4 -mb-4 px-0 pb-0">
+      {isEasyMode && (
+        <CardHeader>
+          <CardTitle>Price Predictions</CardTitle>
+          <CardDescription>
+            These are predictions about how cryptocurrency prices might change. Higher confidence means the system is
+            more certain about the prediction.
+          </CardDescription>
+        </CardHeader>
+      )}
+      <CardContent className={cn("-mx-4 -mb-4 px-0 pb-0", isEasyMode && "-mt-4")}>
         <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Symbol</TableHead>
-            <TableHead>Predicted Return</TableHead>
+            <TableHead>{isEasyMode ? "Cryptocurrency" : "Symbol"}</TableHead>
+            <TableHead>{isEasyMode ? "Expected Change" : "Predicted Return"}</TableHead>
             <TableHead>Confidence</TableHead>
             <TableHead>Trend</TableHead>
             <TableHead>Timestamp</TableHead>
-            <TableHead>Models</TableHead>
+            {!isEasyMode && <TableHead>Models</TableHead>}
+            {isEasyMode && <TableHead>Summary</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -63,8 +96,18 @@ export function ForecastTable({ data, isLoading, lastUpdated, history }: Props) 
 
           {!isLoading && data.length === 0 && (
             <TableRow>
-              <TableCell colSpan={5} className="py-6 text-sm text-muted-foreground">
-                No forecasts available for the selected horizon.
+              <TableCell colSpan={isEasyMode ? 6 : 6} className="p-0">
+                <div className="py-6">
+                  <EmptyState
+                    variant="data"
+                    title={isEasyMode ? "No Predictions Yet" : "No Forecasts Available"}
+                    description={
+                      isEasyMode
+                        ? "Price predictions will appear here once the system has analyzed market data. Check back soon or run the initial setup if you haven't already."
+                        : "No forecasts available for the selected horizon. Try selecting a different time horizon or wait for new forecasts to be generated."
+                    }
+                  />
+                </div>
               </TableCell>
             </TableRow>
           )}
@@ -101,30 +144,42 @@ export function ForecastTable({ data, isLoading, lastUpdated, history }: Props) 
                 <TableCell>
                   <span className="text-sm text-muted-foreground">{formattedTimestamp}</span>
                 </TableCell>
-                <TableCell>
-                  {row.models && row.models.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {row.models.map((model) => (
-                        <Badge key={model.model_id} variant="outline">
-                          <span className="font-medium">{model.model_id}</span>
-                          {model.prediction !== undefined && (
-                            <span className="ml-1 text-muted-foreground">
-                              {(model.prediction * 100).toFixed(2)}%
-                            </span>
-                          )}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </TableCell>
+                {isEasyMode ? (
+                  <TableCell>
+                    <span className="text-xs text-muted-foreground">{getPlainLanguageSummary(row)}</span>
+                  </TableCell>
+                ) : (
+                  <TableCell>
+                    {row.models && row.models.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {row.models.map((model) => (
+                          <Badge key={model.model_id} variant="outline">
+                            <span className="font-medium">{model.model_id}</span>
+                            {model.prediction !== undefined && (
+                              <span className="ml-1 text-muted-foreground">
+                                {(model.prediction * 100).toFixed(2)}%
+                              </span>
+                            )}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                )}
               </TableRow>
             );
           })}
         </TableBody>
         <TableCaption>
-          {lastUpdated ? `Last refreshed ${lastUpdated.toLocaleTimeString()}` : "Forecasts refresh every 30s."}
+          {lastUpdated
+            ? isEasyMode
+              ? `Last updated ${lastUpdated.toLocaleTimeString()}`
+              : `Last refreshed ${lastUpdated.toLocaleTimeString()}`
+            : isEasyMode
+              ? "Predictions update automatically every 30 seconds"
+              : "Forecasts refresh every 30s."}
         </TableCaption>
         </Table>
       </CardContent>

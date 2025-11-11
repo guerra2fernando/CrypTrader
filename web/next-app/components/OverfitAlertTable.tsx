@@ -1,5 +1,8 @@
 import { AcknowledgeDialog } from "@/components/AcknowledgeDialog";
+import { EmptyState } from "@/components/EmptyState";
+import { ProgressIndicator } from "@/components/ProgressIndicator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useMode } from "@/lib/mode-context";
 
 type OverfitAlert = {
   _id?: string;
@@ -21,12 +24,24 @@ type Props = {
 };
 
 export function OverfitAlertTable({ alerts, isLoading = false, onAcknowledge, acknowledgingId }: Props) {
+  const { isEasyMode } = useMode();
+
   if (isLoading) {
-    return <p className="text-sm text-muted-foreground">Checking strategies for overfitting...</p>;
+    return <ProgressIndicator message="Checking strategies for overfitting..." variant="spinner" />;
   }
 
   if (!alerts || alerts.length === 0) {
-    return <p className="text-sm text-muted-foreground">No overfitting alerts 🎉</p>;
+    return (
+      <EmptyState
+        variant="default"
+        title={isEasyMode ? "No Issues Detected" : "No Overfitting Alerts"}
+        description={
+          isEasyMode
+            ? "All strategies are performing well! The system monitors strategies to make sure they continue to work as expected."
+            : "No overfitting alerts 🎉"
+        }
+      />
+    );
   }
 
   return (

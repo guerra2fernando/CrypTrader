@@ -1,193 +1,209 @@
-import { useCallback, useMemo, useState } from "react";
+/* eslint-disable */
+// @ts-nocheck
+import { useMemo, useState, useEffect } from "react";
+import { useRouter } from "next/router";
 import useSWR from "swr";
+import { TrendingUp, BarChart3, MessageSquare, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
-import { InsightsTabs } from "@/components/InsightsTabs";
+import { type ForecastRow } from "@/components/ForecastTable";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { fetcher, postJson } from "@/lib/api";
+import { useMode } from "@/lib/mode-context";
+import { fetcher } from "@/lib/api";
 
-type MetaModelResponse = {
-  latest?: {
-    trained_at?: string;
-    sample_count?: number;
-    metrics?: Record<string, number>;
-    feature_importances?: { feature: string; importance: number }[];
-  };
+type ForecastBatchResponse = {
+  forecasts: ForecastRow[];
 };
 
-type AllocatorResponse = {
-  snapshot?: {
-    weights?: { strategy_id: string; weight: number; expected_roi?: number }[];
-    expected_portfolio_return?: number;
-    expected_portfolio_risk?: number;
-    history?: Record<string, number[]>;
-  };
-};
-
-type OverfitResponse = {
-  alerts: Array<{
-    _id?: string;
-    strategy_id: string;
-    decay: number;
-    baseline_roi?: number;
-    recent_roi?: number;
-    detected_at?: string;
-    latest_run_id?: string;
-    sharpe_delta?: number;
+type StrategiesResponse = {
+  runs: Array<{
+    run_id: string;
+    strategy: string;
+    symbol: string;
+    interval: string;
+    results: {
+      pnl?: number;
+      sharpe?: number;
+      max_drawdown?: number;
+    };
   }>;
 };
 
-type KnowledgeResponse = {
-  entry?: {
-    summary?: string;
-    created_at?: string;
-    overfit_ids?: string[];
-    queued_strategies?: string[];
-  };
-};
+function useBatchForecast(horizon: string, symbols: string[]) {
+  const params = new URLSearchParams({
+    horizon,
+    symbols: symbols.join(","),
+  });
+  const key = `/api/forecast/batch?${params.toString()}`;
+  return useSWR(key, fetcher, {
+    refreshInterval: 30_000,
+    revalidateOnFocus: true,
+  });
+}
 
 export default function InsightsPage() {
-  const { data: metaData, mutate: mutateMeta, isLoading: isLoadingMeta } = useSWR<MetaModelResponse>(
-    "/api/learning/meta-model",
-    fetcher,
-    {
-      refreshInterval: 60_000,
-      revalidateOnFocus: true,
-    },
-  );
-  const { data: allocatorData, mutate: mutateAllocator, isLoading: isLoadingAllocator } = useSWR<AllocatorResponse>(
-    "/api/learning/allocator",
-    fetcher,
-    {
-      refreshInterval: 120_000,
-    },
-  );
-  const { data: overfitData, mutate: mutateOverfit, isLoading: isLoadingOverfit } = useSWR<OverfitResponse>(
-    "/api/learning/overfit?status=open",
-    fetcher,
-    {
-      refreshInterval: 60_000,
-    },
-  );
-  const { data: knowledgeData, mutate: mutateKnowledge, isLoading: isLoadingKnowledge } = useSWR<KnowledgeResponse>(
-    "/api/knowledge/latest",
-    fetcher,
-    {
-      refreshInterval: 300_000,
-    },
+  const router = useRouter();
+  const { isEasyMode } = useMode();
+  const [mounted, setMounted] = useState(false);
+
+  // Forecasts data
+  const DEFAULT_SYMBOLS = ["BTC/USDT", "ETH/USDT", "SOL/USDT"];
+  const { data: forecastData, isLoading: isLoadingForecasts } = useBatchForecast("1h", DEFAULT_SYMBOLS);
+  const forecastRows: ForecastRow[] = useMemo(
+    () => (forecastData as ForecastBatchResponse | undefined)?.forecasts ?? [],
+    [forecastData],
   );
 
-  const [acknowledgingId, setAcknowledgingId] = useState<string | null>(null);
-  const [cycleStatus, setCycleStatus] = useState<{ running: boolean; error?: string; message?: string }>({
-    running: false,
-  });
+  // Strategies data
+  const { data: strategiesData } = useSWR<StrategiesResponse>("/api/run/sim?limit=5", fetcher);
+  const topStrategies = useMemo(() => {
+    const runs = strategiesData?.runs ?? [];
+    return runs
+      .sort((a, b) => (b.results.pnl ?? 0) - (a.results.pnl ?? 0))
+      .slice(0, 3);
+  }, [strategiesData]);
 
-  const handleAck = useCallback(
-    async (alertId: string) => {
-      setAcknowledgingId(alertId);
-      try {
-        await postJson("/api/learning/overfit/ack", { alert_id: alertId });
-        await mutateOverfit();
-        await mutateKnowledge();
-      } catch (error) {
-        console.error("Failed to acknowledge alert", error);
-      } finally {
-        setAcknowledgingId(null);
-      }
-    },
-    [mutateKnowledge, mutateOverfit],
-  );
-
-  const runCycle = useCallback(async () => {
-    setCycleStatus({ running: true });
-    try {
-      const response = await postJson("/api/learning/cycle/run", {
-        train_meta: true,
-        generate_candidates: true,
-        rebalance: true,
-        evaluate_overfit: true,
-      });
-      setCycleStatus({ running: false, message: "Learning cycle completed." });
-      await Promise.all([mutateMeta(), mutateAllocator(), mutateOverfit(), mutateKnowledge()]);
-      return response;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to run learning cycle.";
-      setCycleStatus({ running: false, error: message });
-      return null;
+  useEffect(() => {
+    setMounted(true);
+    // Only show in Easy Mode - redirect if in Advanced Mode
+    if (!isEasyMode) {
+      router.push("/analytics");
     }
-  }, [mutateAllocator, mutateKnowledge, mutateMeta, mutateOverfit]);
+  }, [isEasyMode, router]);
 
-  const metaInsights = useMemo(() => {
-    return metaData?.latest;
-  }, [metaData]);
-
-  const allocatorInsights = useMemo(() => {
-    const snapshot = allocatorData?.snapshot;
-    return snapshot
-      ? {
-          weights: snapshot.weights,
-          expected_portfolio_return: snapshot.expected_portfolio_return,
-          expected_portfolio_risk: snapshot.expected_portfolio_risk,
-        }
-      : undefined;
-  }, [allocatorData]);
-
-  const knowledgeInsights = useMemo(() => {
-    const entry = knowledgeData?.entry;
-    if (!entry) {
-      return undefined;
-    }
-    return {
-      summary: entry.summary,
-      created_at: entry.created_at,
-      overfit_ids: entry.overfit_ids,
-      queued_strategies: entry.queued_strategies,
-    };
-  }, [knowledgeData]);
+  if (!mounted || !isEasyMode) {
+    return null;
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Learning Insights</h1>
-          <p className="text-sm text-muted-foreground">
-            Meta-model diagnostics, allocator decisions, and overfitting alerts from the adaptive intelligence loop.
-          </p>
-        </div>
-        <Button onClick={runCycle} disabled={cycleStatus.running}>
-          {cycleStatus.running ? "Running Cycle…" : "Run Learning Cycle"}
-        </Button>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Insights</h1>
+        <p className="text-sm text-muted-foreground">
+          See what the system thinks about the markets, which strategies are performing best, and get recommendations.
+        </p>
       </div>
 
-      {cycleStatus.error && (
-        <Card className="border-destructive/40 bg-destructive/10">
-          <CardHeader>
-            <CardTitle className="text-destructive">Cycle failed</CardTitle>
-            <CardDescription className="text-destructive/80">{cycleStatus.error}</CardDescription>
-          </CardHeader>
-        </Card>
-      )}
+      {/* What the System Thinks - Forecasts */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            <CardTitle>What the System Thinks</CardTitle>
+          </div>
+          <CardDescription>
+            Price predictions for the next hour. Positive values mean prices are expected to go up, negative means down.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoadingForecasts ? (
+            <p className="text-sm text-muted-foreground">Loading predictions...</p>
+          ) : forecastRows.length > 0 ? (
+            <div className="space-y-3">
+              {forecastRows.slice(0, 3).map((forecast) => {
+                const predReturn = forecast.pred_return ?? 0;
+                const isPositive = predReturn > 0;
+                return (
+                  <div key={forecast.symbol} className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
+                    <div>
+                      <p className="font-medium text-foreground">{forecast.symbol}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {isPositive ? "Expected to go up" : predReturn < 0 ? "Expected to go down" : "Expected to stay flat"}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant={isPositive ? "default" : predReturn < 0 ? "destructive" : "secondary"}>
+                        {isPositive ? "+" : ""}
+                        {(predReturn * 100).toFixed(2)}%
+                      </Badge>
+                      {forecast.confidence && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Confidence: {(forecast.confidence * 100).toFixed(0)}%
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No forecasts available yet.</p>
+          )}
+        </CardContent>
+      </Card>
 
-      {cycleStatus.message && !cycleStatus.error && (
-        <Card className="border-emerald-500/40 bg-emerald-500/10">
-          <CardContent className="py-3 text-sm text-emerald-900 dark:text-emerald-100">{cycleStatus.message}</CardContent>
-        </Card>
-      )}
+      {/* Best Strategies */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-primary" />
+            <CardTitle>Best Strategies</CardTitle>
+          </div>
+          <CardDescription>
+            Top performing trading strategies based on recent tests. Higher profit means better performance.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {topStrategies.length > 0 ? (
+            <div className="space-y-3">
+              {topStrategies.map((strategy, index) => {
+                const pnl = strategy.results.pnl ?? 0;
+                const sharpe = strategy.results.sharpe ?? 0;
+                return (
+                  <div key={strategy.run_id} className="rounded-lg border bg-muted/30 p-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">#{index + 1}</Badge>
+                          <p className="font-medium text-foreground">{strategy.strategy}</p>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {strategy.symbol} • {strategy.interval}
+                        </p>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          Risk-adjusted return: {sharpe.toFixed(2)}
+                        </p>
+                      </div>
+                      <Badge variant={pnl > 0 ? "default" : pnl < 0 ? "destructive" : "secondary"}>
+                        {pnl > 0 ? "+" : ""}
+                        {pnl.toFixed(2)}
+                      </Badge>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No strategy results available yet.</p>
+          )}
+        </CardContent>
+      </Card>
 
-      <InsightsTabs
-        meta={metaInsights}
-        allocator={allocatorInsights}
-        overfit={overfitData}
-        knowledge={knowledgeInsights}
-        acknowledgingId={acknowledgingId}
-        onAckOverfit={handleAck}
-        isLoading={{
-          meta: isLoadingMeta,
-          allocator: isLoadingAllocator,
-          overfit: isLoadingOverfit,
-          knowledge: isLoadingKnowledge,
-        }}
-      />
+      {/* Recommendations */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-primary" />
+            <CardTitle>Get Recommendations</CardTitle>
+          </div>
+          <CardDescription>
+            Ask the AI assistant for personalized trading recommendations based on current market conditions.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link href="/assistant">
+            <Button className="w-full sm:w-auto">
+              Ask the Assistant
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
+          <p className="mt-3 text-sm text-muted-foreground">
+            The assistant can help you understand what to trade, when to trade, and answer any questions about the platform.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

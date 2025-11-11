@@ -2,7 +2,9 @@
 // @ts-nocheck
 import { Fragment } from "react";
 
+import { EmptyState } from "@/components/EmptyState";
 import { MessageBubble } from "@/components/MessageBubble";
+import { useMode } from "@/lib/mode-context";
 
 type EvidenceItem = {
   evidence_id: string;
@@ -48,12 +50,20 @@ function formatAssistantMessage(entry: AssistantHistoryEntry) {
 }
 
 export function ChatTranscript({ history, onSelectEvidence }: ChatTranscriptProps) {
+  const { isEasyMode } = useMode();
+
   return (
     <div className="flex flex-col gap-4">
       {history.length === 0 && (
-        <div className="rounded-lg border border-dashed border-muted bg-background/60 p-6 text-center text-sm text-muted-foreground">
-          Send a query to begin the conversation with your assistant.
-        </div>
+        <EmptyState
+          variant="default"
+          title={isEasyMode ? "Start Chatting" : "No Messages"}
+          description={
+            isEasyMode
+              ? "Send a message to start a conversation with the assistant. Ask questions about trading, get recommendations, or learn how the platform works."
+              : "Send a query to begin the conversation with your assistant."
+          }
+        />
       )}
       {history.map((entry) => (
         <Fragment key={entry.answer_id}>

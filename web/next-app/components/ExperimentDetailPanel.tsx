@@ -1,4 +1,6 @@
+import { EmptyState } from "@/components/EmptyState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMode } from "@/lib/mode-context";
 
 type Experiment = {
   experiment_id: string;
@@ -27,6 +29,8 @@ type ExperimentDetailPanelProps = {
 };
 
 export function ExperimentDetailPanel({ experiment }: ExperimentDetailPanelProps) {
+  const { isEasyMode } = useMode();
+
   if (!experiment) {
     return (
       <Card>
@@ -34,7 +38,15 @@ export function ExperimentDetailPanel({ experiment }: ExperimentDetailPanelProps
           <CardTitle>Experiment Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">Select an experiment to inspect metrics and mutations.</p>
+          <EmptyState
+            variant="default"
+            title={isEasyMode ? "Select an Experiment" : "Select an Experiment"}
+            description={
+              isEasyMode
+                ? "Click on an experiment from the board to see detailed information about how it performed and what changes were made."
+                : "Select an experiment to inspect metrics and mutations."
+            }
+          />
         </CardContent>
       </Card>
     );

@@ -1,6 +1,8 @@
 /* eslint-disable */
 // @ts-nocheck
+import { EmptyState } from "@/components/EmptyState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMode } from "@/lib/mode-context";
 
 type Alert = {
   title: string;
@@ -21,6 +23,8 @@ const BADGE_COLORS: Record<string, string> = {
 };
 
 export function AlertStream({ alerts }: AlertStreamProps) {
+  const { isEasyMode } = useMode();
+
   return (
     <Card className="h-full">
       <CardHeader>
@@ -28,7 +32,15 @@ export function AlertStream({ alerts }: AlertStreamProps) {
       </CardHeader>
       <CardContent className="space-y-3">
         {alerts.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Execution alerts will appear here.</p>
+          <EmptyState
+            variant="default"
+            title={isEasyMode ? "No Alerts" : "No Alerts"}
+            description={
+              isEasyMode
+                ? "System alerts and notifications will appear here when there are important updates about your trading activity."
+                : "Execution alerts will appear here."
+            }
+          />
         ) : (
           alerts.map((alert, index) => {
             const severity = alert.severity ?? "info";

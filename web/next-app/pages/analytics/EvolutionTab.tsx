@@ -1,33 +1,23 @@
 /* eslint-disable */
 // @ts-nocheck
 import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
-import { useMode } from "@/lib/mode-context";
+import useSWR from "swr";
+import Link from "next/link";
 
-export default function EvolutionPage() {
-  const router = useRouter();
-  const { isAdvancedMode } = useMode();
-  const [mounted, setMounted] = useState(false);
+import { EvolutionLeaderboardTable } from "@/components/EvolutionLeaderboardTable";
+import { ExperimentStatusBadge } from "@/components/ExperimentStatusBadge";
+import { FitnessScatterChart } from "@/components/FitnessScatterChart";
+import { GenomeComparisonPanel } from "@/components/GenomeComparisonPanel";
+import { LineageGraph } from "@/components/LineageGraph";
+import { MutationQueueDrawer } from "@/components/MutationQueueDrawer";
+import { ProgressIndicator } from "@/components/ProgressIndicator";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { fetcher, postJson } from "@/lib/api";
 
-  useEffect(() => {
-    setMounted(true);
-    // Redirect to consolidated pages - evolution is only in Advanced Mode
-    if (isAdvancedMode) {
-      router.replace("/analytics");
-    } else {
-      router.replace("/insights");
-    }
-  }, [isAdvancedMode, router]);
-
-  if (!mounted) {
-    return null;
-  }
-
-  return null;
-}
-
-// Old implementation kept for reference - redirects above
-function EvolutionPageOld() {
+export default function EvolutionTab() {
   const [symbol, setSymbol] = useState("BTC/USDT");
   const [interval, setInterval] = useState("1m");
   const [accounts, setAccounts] = useState(12);
@@ -172,6 +162,11 @@ function EvolutionPageOld() {
 
   return (
     <div className="space-y-8">
+      <div>
+        <h2 className="text-xl font-semibold tracking-tight">Evolution Lab</h2>
+        <p className="text-sm text-muted-foreground">Spawn strategy mutations, monitor fitness, and promote champions.</p>
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-4">
         <Card className="lg:col-span-3">
           <CardHeader>
@@ -179,7 +174,7 @@ function EvolutionPageOld() {
             <CardDescription>Spawn strategy mutations, monitor fitness, and promote champions.</CardDescription>
             <div className="flex flex-wrap gap-2 pt-2">
               <Button asChild variant="outline">
-                <a href="/evolution/autonomy">Open Autonomous Evolution Dashboard</a>
+                <Link href="/evolution/autonomy">Open Autonomous Evolution Dashboard</Link>
               </Button>
             </div>
             {runMessage ? <p className="text-xs text-muted-foreground">{runMessage}</p> : null}
@@ -218,11 +213,15 @@ function EvolutionPageOld() {
                 {isRunning ? "Scheduling…" : "Run Experiments"}
               </Button>
             </div>
-            {activeTaskId ? (
-              <div className="md:col-span-2 lg:col-span-4 text-xs text-muted-foreground">
-                Tracking task {activeTaskId.slice(0, 8)}… Status: {taskStatus ?? "pending"}
+            {activeTaskId && (
+              <div className="md:col-span-2 lg:col-span-4">
+                <ProgressIndicator
+                  message={`Running experiments (Task ${activeTaskId.slice(0, 8)}...)`}
+                  subMessage={`Status: ${taskStatus ?? "pending"}. ${runMessage || "This may take several minutes."}`}
+                  variant="indeterminate"
+                />
               </div>
-            ) : null}
+            )}
           </CardContent>
         </Card>
         <div className="space-y-4 lg:col-span-1">
@@ -320,5 +319,4 @@ function EvolutionPageOld() {
     </div>
   );
 }
-
 

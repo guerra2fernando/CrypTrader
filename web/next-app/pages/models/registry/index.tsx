@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 
+import { ErrorMessage } from "@/components/ErrorMessage";
 import { ModelRegistryTable, type ModelRegistryRecord } from "@/components/ModelRegistryTable";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -148,12 +149,12 @@ export default function ModelRegistryPage() {
       </Card>
 
       {error && (
-        <Card className="border-destructive/50 bg-destructive/10">
-          <CardHeader>
-            <CardTitle className="text-destructive">Unable to load registry</CardTitle>
-            <CardDescription className="text-destructive/80">{error.message}</CardDescription>
-          </CardHeader>
-        </Card>
+        <ErrorMessage
+          title="Unable to load registry"
+          message={error instanceof Error ? error.message : "Unknown error"}
+          error={error}
+          onRetry={() => window.location.reload()}
+        />
       )}
 
       {actionMessage && (
@@ -170,13 +171,13 @@ export default function ModelRegistryPage() {
         selectedModelId={selectedModelId}
       />
 
-      {selectedModelError ? (
-        <Card className="border-destructive/50 bg-destructive/10">
-          <CardContent className="py-4 text-sm text-destructive-foreground">
-            Failed to load model details. {selectedModelError instanceof Error ? selectedModelError.message : "Unknown error"}
-          </CardContent>
-        </Card>
-      ) : null}
+      {selectedModelError && (
+        <ErrorMessage
+          title="Failed to load model details"
+          message={selectedModelError instanceof Error ? selectedModelError.message : "Unknown error"}
+          error={selectedModelError}
+        />
+      )}
 
       {selectedModel ? (
         <Card>

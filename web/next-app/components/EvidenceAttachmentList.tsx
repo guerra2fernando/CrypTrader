@@ -2,6 +2,9 @@
 // @ts-nocheck
 import Link from "next/link";
 
+import { EmptyState } from "@/components/EmptyState";
+import { useMode } from "@/lib/mode-context";
+
 type EvidenceItem = {
   evidence_id: string;
   title: string;
@@ -15,11 +18,19 @@ type EvidenceAttachmentListProps = {
 };
 
 export function EvidenceAttachmentList({ evidence }: EvidenceAttachmentListProps) {
+  const { isEasyMode } = useMode();
+
   if (!evidence?.length) {
     return (
-      <div className="rounded-md border border-dashed border-border p-4 text-xs text-muted-foreground">
-        No evidence was attached to this answer.
-      </div>
+      <EmptyState
+        variant="default"
+        title={isEasyMode ? "No Evidence" : "No Evidence Attached"}
+        description={
+          isEasyMode
+            ? "This answer doesn't have supporting evidence attached. Evidence helps explain how the assistant reached its conclusions."
+            : "No evidence was attached to this answer."
+        }
+      />
     );
   }
 

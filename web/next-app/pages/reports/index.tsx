@@ -2,11 +2,15 @@
 // @ts-nocheck
 import Link from "next/link";
 import useSWR from "swr";
-import { ArrowRight, FileText, Loader2 } from "lucide-react";
+import { ArrowRight, FileText } from "lucide-react";
 
+import { EmptyState } from "@/components/EmptyState";
+import { ErrorMessage } from "@/components/ErrorMessage";
+import { ProgressIndicator } from "@/components/ProgressIndicator";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMode } from "@/lib/mode-context";
 import { fetcher } from "@/lib/api";
 
 type ReportListItem = {
@@ -27,6 +31,7 @@ const truncate = (value: string, maxLength = 140) => {
 };
 
 export default function ReportsPage(): JSX.Element {
+  const { isEasyMode } = useMode();
   const {
     data,
     error,
@@ -60,22 +65,18 @@ export default function ReportsPage(): JSX.Element {
         </Button>
       </header>
 
-      {isLoading ? (
-        <Card>
-          <CardContent className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Loading reports&hellip;
-          </CardContent>
-        </Card>
-      ) : null}
+      {isLoading && (
+        <ProgressIndicator message="Loading reports..." variant="spinner" />
+      )}
 
-      {error ? (
-        <Card>
-          <CardContent className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-sm text-destructive-foreground">
-            Failed to load reports. {error instanceof Error ? error.message : "Unknown error"}
-          </CardContent>
-        </Card>
-      ) : null}
+      {error && (
+        <ErrorMessage
+          title="Failed to load reports"
+          message={error instanceof Error ? error.message : "Unknown error"}
+          error={error}
+          onRetry={() => refetchReports()}
+        />
+      )}
 
       {latestReport ? (
         <Card>
@@ -128,11 +129,15 @@ export default function ReportsPage(): JSX.Element {
                 ))}
               </ul>
             ) : (
-              <div className="rounded-lg border border-dashed p-8 text-center">
-                <p className="text-sm text-muted-foreground">
-                  No reports yet. Run the Phase 0 bootstrap workflow to generate the first report.
-                </p>
-              </div>
+              <EmptyState
+                variant="data"
+                title={isEasyMode ? "No Reports Yet" : "No Reports Available"}
+                description={
+                  isEasyMode
+                    ? "Daily performance reports will appear here once the system starts generating them. Complete the initial setup to get started."
+                    : "No reports yet. Run the Phase 0 bootstrap workflow to generate the first report."
+                }
+              />
             )}
           </CardContent>
         </Card>

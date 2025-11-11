@@ -2,7 +2,9 @@
 // @ts-nocheck
 import { useMemo } from "react";
 
+import { EmptyState } from "@/components/EmptyState";
 import { ExperimentCard } from "@/components/ExperimentCard";
+import { useMode } from "@/lib/mode-context";
 
 type Experiment = {
   experiment_id: string;
@@ -25,6 +27,7 @@ const COLUMNS = [
 ];
 
 export function ExperimentKanbanBoard({ experiments, onSelect, selectedId }: ExperimentKanbanBoardProps) {
+  const { isEasyMode } = useMode();
   const grouped = useMemo(() => {
     const buckets: Record<string, Experiment[]> = {};
     for (const column of COLUMNS) {
@@ -58,9 +61,17 @@ export function ExperimentKanbanBoard({ experiments, onSelect, selectedId }: Exp
               />
             ))}
             {((grouped[column.key] ?? []).length === 0) && (
-              <p className="rounded-md border border-dashed border-border/60 p-3 text-xs text-muted-foreground">
-                No experiments in this column.
-              </p>
+              <div className="p-3">
+                <EmptyState
+                  variant="default"
+                  title=""
+                  description={
+                    isEasyMode
+                      ? `No experiments ${column.title.toLowerCase()} yet.`
+                      : `No experiments in this column.`
+                  }
+                />
+              </div>
             )}
           </div>
         </div>

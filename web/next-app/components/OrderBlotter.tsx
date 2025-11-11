@@ -1,8 +1,10 @@
 /* eslint-disable */
 // @ts-nocheck
+import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useMode } from "@/lib/mode-context";
 import { formatNumber } from "@/lib/utils";
 
 type Order = {
@@ -29,35 +31,43 @@ type OrderBlotterProps = {
 };
 
 export function OrderBlotter({ orders, onCancel, onSync, onAmend }: OrderBlotterProps) {
+  const { isEasyMode } = useMode();
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Order Blotter</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Order ID</TableHead>
-              <TableHead>Symbol</TableHead>
-              <TableHead>Side</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Qty</TableHead>
-              <TableHead>Filled</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Avg Fill</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {orders.length === 0 ? (
+        {orders.length === 0 ? (
+          <div className="p-6">
+            <EmptyState
+              variant="trading"
+              title={isEasyMode ? "No Orders Yet" : "No Orders"}
+              description={
+                isEasyMode
+                  ? "You haven't placed any orders yet. Use the trading interface to buy or sell cryptocurrency, or ask the assistant for recommendations."
+                  : "No orders yet. Submit one using the Approval Wizard or Guided Trading Flow."
+              }
+            />
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={10} className="text-center text-muted-foreground">
-                  No orders yet. Submit one using the Approval Wizard.
-                </TableCell>
+                <TableHead>Order ID</TableHead>
+                <TableHead>Symbol</TableHead>
+                <TableHead>Side</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Qty</TableHead>
+                <TableHead>Filled</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Avg Fill</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ) : (
+            </TableHeader>
+            <TableBody>
               orders.map((order) => {
                 const remaining = Math.max(0, order.quantity - (order.filled_quantity ?? 0));
                 const canCancel = ["new", "submitted", "partially_filled"].includes(order.status);
@@ -101,10 +111,10 @@ export function OrderBlotter({ orders, onCancel, onSync, onAmend }: OrderBlotter
                     </TableCell>
                   </TableRow>
                 );
-              })
-            )}
-          </TableBody>
-        </Table>
+              })}
+            </TableBody>
+          </Table>
+        )}
       </CardContent>
     </Card>
   );

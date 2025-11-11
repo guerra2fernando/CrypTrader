@@ -1,6 +1,8 @@
+import { EmptyState } from "@/components/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useMode } from "@/lib/mode-context";
 import { cn } from "@/lib/utils";
 
 type LeaderboardEntry = {
@@ -36,6 +38,7 @@ function formatNumber(value?: number, digits = 2) {
 }
 
 export function EvolutionLeaderboardTable({ entries, selectedId, onSelect }: Props) {
+  const { isEasyMode } = useMode();
   const rows = entries ?? [];
 
   return (
@@ -95,7 +98,15 @@ export function EvolutionLeaderboardTable({ entries, selectedId, onSelect }: Pro
             </TableBody>
           </Table>
         ) : (
-          <p className="text-sm text-muted-foreground">Run experiments to populate the leaderboard.</p>
+          <EmptyState
+            variant="data"
+            title={isEasyMode ? "No Strategies Yet" : "Empty Leaderboard"}
+            description={
+              isEasyMode
+                ? "The leaderboard will show the best performing trading strategies once experiments are run. Run experiments from the Evolution Lab to get started."
+                : "Run experiments to populate the leaderboard."
+            }
+          />
         )}
       </CardContent>
     </Card>

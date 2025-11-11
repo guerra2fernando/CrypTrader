@@ -8,6 +8,7 @@ import { AlertStream } from "@/components/AlertStream";
 import { ApprovalWizard } from "@/components/ApprovalWizard";
 import { ExecutionLatencyChart } from "@/components/ExecutionLatencyChart";
 import { FillsFeed } from "@/components/FillsFeed";
+import { GuidedTradingFlow } from "@/components/GuidedTradingFlow";
 import { KillSwitchPanel } from "@/components/KillSwitchPanel";
 import { OrderAmendForm } from "@/components/OrderAmendForm";
 import { OrderBlotter } from "@/components/OrderBlotter";
@@ -16,6 +17,7 @@ import { RiskGaugeCard } from "@/components/RiskGaugeCard";
 import { TradingTabs } from "@/components/TradingTabs";
 import { useToast } from "@/components/ToastProvider";
 import { Card } from "@/components/ui/card";
+import { useMode } from "@/lib/mode-context";
 import { fetcher, postJson } from "@/lib/api";
 import { useWebSocket } from "@/lib/hooks";
 
@@ -26,6 +28,7 @@ const MODES = [
 ];
 
 export default function TradingControlCenterPage() {
+  const { isEasyMode } = useMode();
   const [mode, setMode] = useState("paper");
   const [editingOrder, setEditingOrder] = useState(null);
   const { pushToast } = useToast();
@@ -85,6 +88,17 @@ export default function TradingControlCenterPage() {
     await refreshSummary();
   };
 
+  const handleGuidedOrder = async (order: { symbol: string; side: "buy" | "sell"; size: number }) => {
+    const payload = {
+      symbol: order.symbol,
+      side: order.side,
+      quantity: order.size,
+      mode: mode,
+      type: "market",
+    };
+    await handleSubmitOrder(payload);
+  };
+
   const handleCancel = async (order) => {
     await postJson(`/api/trading/orders/${order.order_id}/cancel`, { reason: "user" });
     pushToast({ title: "Order canceled", description: order.order_id, variant: "warning" });
@@ -139,7 +153,11 @@ export default function TradingControlCenterPage() {
       <div className="flex flex-col gap-6 lg:flex-row">
         <div className="flex-1 space-y-4">
           <TradingTabs mode={mode} onModeChange={setMode} modes={MODES} />
-          <ApprovalWizard onSubmit={handleSubmitOrder} defaultMode={mode} />
+          {isEasyMode ? (
+            <GuidedTradingFlow onSubmitOrder={handleGuidedOrder} />
+          ) : (
+            <ApprovalWizard onSubmit={handleSubmitOrder} defaultMode={mode} />
+          )}
           {editingOrder ? (
             <Card className="p-4">
               <OrderAmendForm

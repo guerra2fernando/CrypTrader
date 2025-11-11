@@ -1,5 +1,7 @@
+import { EmptyState } from "@/components/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMode } from "@/lib/mode-context";
 
 type QueueItem = {
   _id: string;
@@ -33,6 +35,7 @@ function formatTimestamp(value?: string) {
 }
 
 export function MutationQueueDrawer({ items }: Props) {
+  const { isEasyMode } = useMode();
   const queue = items ?? [];
 
   return (
@@ -43,7 +46,15 @@ export function MutationQueueDrawer({ items }: Props) {
       </CardHeader>
       <CardContent className="space-y-3">
         {queue.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Queue is empty.</p>
+          <EmptyState
+            variant="default"
+            title={isEasyMode ? "Queue is Empty" : "Queue is Empty"}
+            description={
+              isEasyMode
+                ? "No strategy experiments are currently queued. Run experiments from the Evolution Lab to test new trading strategies."
+                : "Queue is empty."
+            }
+          />
         ) : (
           queue.map((item) => {
             const variant = STATUS_VARIANT[item.status] ?? "outline";
